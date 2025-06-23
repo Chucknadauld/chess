@@ -84,11 +84,27 @@ public class ChessPiece {
         }
     }
 
-
-
     private Collection<ChessMove> getKingMoves(ChessBoard board, ChessPosition position) {
         List<ChessMove> moves = new ArrayList<>();
-        // add logic here
+
+        int[][] possibleMoves = {
+                {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+        };
+
+        for (int[] possibleMove : possibleMoves) {
+            int newRow = position.getRow() + possibleMove[0];
+            int newCol = position.getColumn() + possibleMove[1];
+
+            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                ChessPosition newPosition = new ChessPosition(newRow, newCol);
+                ChessPiece targetPiece = board.getPiece(newPosition);
+
+                if (targetPiece == null || targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+            }
+        }
+
         return moves;
     }
 
