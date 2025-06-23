@@ -2,6 +2,8 @@ package chess;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a single chess piece
@@ -67,6 +69,75 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        if (this.type == PieceType.KING) {
+            return getKingMoves(board, myPosition);
+        } else if (this.type == PieceType.QUEEN) {
+            return getQueenMoves(board, myPosition);
+        } else if (this.type == PieceType.BISHOP) {
+            return getBishopMoves(board, myPosition);
+        } else if (this.type == PieceType.KNIGHT) {
+            return getKnightMoves(board, myPosition);
+        } else if (this.type == PieceType.ROOK) {
+            return getRookMoves(board, myPosition);
+        } else {
+            return getPawnMoves(board, myPosition);
+        }
+    }
+
+
+
+    private Collection<ChessMove> getKingMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+        // add logic here
+        return moves;
+    }
+
+    private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+        // add logic here
+        return moves;
+    }
+
+    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+        // add logic here
+        return moves;
+    }
+
+    private Collection<ChessMove> getKnightMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+
+        int[][] possibleMoves = {
+            {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+            {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
+        };
+
+        for (int[] possibleMove : possibleMoves) {
+            int newRow = position.getRow() + possibleMove[0];
+            int newCol = position.getColumn() + possibleMove[1];
+
+            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                ChessPosition newPosition = new ChessPosition(newRow, newCol);
+                ChessPiece targetPiece = board.getPiece(newPosition);
+
+                if (targetPiece == null || targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+            }
+        }
+
+        return moves;
+    }
+
+    private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+        // add logic here
+        return moves;
+    }
+
+    private Collection<ChessMove> getPawnMoves(ChessBoard board, ChessPosition position) {
+        List<ChessMove> moves = new ArrayList<>();
+        // add logic here
+        return moves;
     }
 }
