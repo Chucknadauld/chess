@@ -96,7 +96,10 @@ public class ChessPiece {
 
     private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition position) {
         List<ChessMove> moves = new ArrayList<>();
-        // add logic here
+
+        moves.addAll(getRookMoves(board, position));
+        moves.addAll(getBishopMoves(board, position));
+
         return moves;
     }
 
