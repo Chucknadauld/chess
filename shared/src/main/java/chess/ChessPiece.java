@@ -102,7 +102,86 @@ public class ChessPiece {
 
     private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition position) {
         List<ChessMove> moves = new ArrayList<>();
-        // add logic here
+
+        int newColRight = position.getColumn() + 1;
+        int newColLeft;
+        int newRowUp = position.getRow() + 1;
+        int newRowDown;
+
+        // Up + right
+        while (newRowUp <= 8 && newColRight <= 8) {
+            ChessPosition newPosition = new ChessPosition(newRowUp, newColRight);
+            ChessPiece targetPiece = board.getPiece(newPosition);
+
+            if (targetPiece == null) {
+                moves.add(new ChessMove(position, newPosition, null));
+            } else {
+                if (targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+                break;
+            }
+            newRowUp++;
+            newColRight++;
+        }
+
+        // Up + left
+        newRowUp = position.getRow() + 1;
+        newColLeft = position.getColumn() - 1;
+        while (newRowUp <= 8 && newColLeft >= 1) {
+            ChessPosition newPosition = new ChessPosition(newRowUp, newColLeft);
+            ChessPiece targetPiece = board.getPiece(newPosition);
+
+            if (targetPiece == null) {
+                moves.add(new ChessMove(position, newPosition, null));
+            } else {
+                if (targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+                break;
+            }
+            newRowUp++;
+            newColLeft--;
+        }
+
+        // Down + right
+        newRowDown = position.getRow() - 1;
+        newColRight = position.getColumn() + 1;
+        while (newRowDown >= 1 && newColRight <= 8) {
+            ChessPosition newPosition = new ChessPosition(newRowDown, newColRight);
+            ChessPiece targetPiece = board.getPiece(newPosition);
+
+            if (targetPiece == null) {
+                moves.add(new ChessMove(position, newPosition, null));
+            } else {
+                if (targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+                break;
+            }
+            newRowDown--;
+            newColRight++;
+        }
+
+        // Down + left
+        newRowDown = position.getRow() - 1;
+        newColLeft = position.getColumn() - 1;
+        while (newRowDown >= 1 && newColLeft >= 1) {
+            ChessPosition newPosition = new ChessPosition(newRowDown, newColLeft);
+            ChessPiece targetPiece = board.getPiece(newPosition);
+
+            if (targetPiece == null) {
+                moves.add(new ChessMove(position, newPosition, null));
+            } else {
+                if (targetPiece.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+                break;
+            }
+            newRowDown--;
+            newColLeft--;
+        }
+
         return moves;
     }
 
@@ -134,7 +213,7 @@ public class ChessPiece {
     private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition position) {
         List<ChessMove> moves = new ArrayList<>();
 
-        // Right (increasing column)
+        // Right
         int newColRight = position.getColumn() + 1;
         while (newColRight <= 8) {
             ChessPosition newPosition = new ChessPosition(position.getRow(), newColRight);
@@ -151,7 +230,7 @@ public class ChessPiece {
             newColRight++;
         }
 
-        // Left (decreasing column)
+        // Left
         int newColLeft = position.getColumn() - 1;
         while (newColLeft >= 1) {
             ChessPosition newPosition = new ChessPosition(position.getRow(), newColLeft);
@@ -168,7 +247,7 @@ public class ChessPiece {
             newColLeft--;
         }
 
-        // Up (increasing row)
+        // Up
         int newRowUp = position.getRow() + 1;
         while (newRowUp <= 8) {
             ChessPosition newPosition = new ChessPosition(newRowUp, position.getColumn());
@@ -185,7 +264,7 @@ public class ChessPiece {
             newRowUp++;
         }
 
-        // Down (decreasing row)
+        // Down
         int newRowDown = position.getRow() - 1;
         while (newRowDown >= 1) {
             ChessPosition newPosition = new ChessPosition(newRowDown, position.getColumn());
