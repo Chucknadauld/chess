@@ -77,20 +77,7 @@ public class ChessPiece {
                 {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
         };
 
-        for (int[] possibleMove : possibleMoves) {
-            int newRow = position.getRow() + possibleMove[0];
-            int newCol = position.getColumn() + possibleMove[1];
-
-            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                ChessPosition newPosition = new ChessPosition(newRow, newCol);
-                ChessPiece targetPiece = board.getPiece(newPosition);
-
-                if (targetPiece == null || targetPiece.getTeamColor() != this.pieceColor) {
-                    moves.add(new ChessMove(position, newPosition, null));
-                }
-            }
-        }
-
+        checkPossibleMoves(moves, board, position, possibleMoves);
         return moves;
     }
 
@@ -120,20 +107,7 @@ public class ChessPiece {
                 {-2, -1}, {-1, -2}, {1, -2}, {2, -1}
         };
 
-        for (int[] possibleMove : possibleMoves) {
-            int newRow = position.getRow() + possibleMove[0];
-            int newCol = position.getColumn() + possibleMove[1];
-
-            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
-                ChessPosition newPosition = new ChessPosition(newRow, newCol);
-                ChessPiece targetPiece = board.getPiece(newPosition);
-
-                if (targetPiece == null || targetPiece.getTeamColor() != this.pieceColor) {
-                    moves.add(new ChessMove(position, newPosition, null));
-                }
-            }
-        }
-
+        checkPossibleMoves(moves, board, position, possibleMoves);
         return moves;
     }
 
@@ -244,6 +218,23 @@ public class ChessPiece {
         if (target != null && target.getTeamColor() != this.pieceColor) {
             boolean isPromotion = row + direction == promotionRow;
             handleMoveOrPromotion(moves, from, targetPos, isPromotion);
+        }
+    }
+
+    // Helper function for checking possible moves (used in getKnightMoves and getKingMoves)
+    private void checkPossibleMoves(List<ChessMove> moves, ChessBoard board, ChessPosition position, int[][] changes) {
+        for (int[] change : changes) {
+            int newRow = position.getRow() + change[0];
+            int newCol = position.getColumn() + change[1];
+
+            if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8) {
+                ChessPosition newPosition = new ChessPosition(newRow, newCol);
+                ChessPiece target = board.getPiece(newPosition);
+
+                if (target == null || target.getTeamColor() != this.pieceColor) {
+                    moves.add(new ChessMove(position, newPosition, null));
+                }
+            }
         }
     }
 }
