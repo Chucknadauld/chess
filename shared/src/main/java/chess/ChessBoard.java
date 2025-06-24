@@ -89,14 +89,14 @@ public class ChessBoard {
 
     private void addBackRow(int row, ChessGame.TeamColor color) {
         ChessPiece.PieceType[] organization = {
-            ChessPiece.PieceType.ROOK,
-            ChessPiece.PieceType.KNIGHT,
-            ChessPiece.PieceType.BISHOP,
-            ChessPiece.PieceType.QUEEN,
-            ChessPiece.PieceType.KING,
-            ChessPiece.PieceType.BISHOP,
-            ChessPiece.PieceType.KNIGHT,
-            ChessPiece.PieceType.ROOK,
+                ChessPiece.PieceType.ROOK,
+                ChessPiece.PieceType.KNIGHT,
+                ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.QUEEN,
+                ChessPiece.PieceType.KING,
+                ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.KNIGHT,
+                ChessPiece.PieceType.ROOK,
         };
 
         for (int col = 1; col <= 8; col++) {
