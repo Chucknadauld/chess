@@ -56,7 +56,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
-        if (piece == null) return Collections.emptyList();
+        if (piece == null) {
+            return Collections.emptyList();
+        }
 
         Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
 
@@ -80,7 +82,9 @@ public class ChessGame {
             }
 
             // En Passant -_0
-            boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN && startPosition.getColumn() != move.getEndPosition().getColumn() && board.getPiece(move.getEndPosition()) == null;
+            boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN &&
+                    startPosition.getColumn() != move.getEndPosition().getColumn() &&
+                    board.getPiece(move.getEndPosition()) == null;
 
             if (isEnPassant) {
                 ChessPosition capturedPawnPos = new ChessPosition(startPosition.getRow(), move.getEndPosition().getColumn());
@@ -109,11 +113,17 @@ public class ChessGame {
         ChessPosition end = move.getEndPosition();
         ChessPiece piece = board.getPiece(start);
 
-        if (piece == null) throw new InvalidMoveException("Invalid piece.");
-        if (piece.getTeamColor() != teamTurn) throw new InvalidMoveException("Wait your turn!");
+        if (piece == null) {
+            throw new InvalidMoveException("Invalid piece.");
+        }
+        if (piece.getTeamColor() != teamTurn) {
+            throw new InvalidMoveException("Wait your turn!");
+        }
 
         Collection<ChessMove> legalMoves = validMoves(start);
-        if (!legalMoves.contains(move)) throw new InvalidMoveException("That move is not allowed!");
+        if (!legalMoves.contains(move)) {
+            throw new InvalidMoveException("That move is not allowed!");
+        }
 
         boolean isCastling = false;
         if (piece.getPieceType() == ChessPiece.PieceType.KING) {
@@ -122,7 +132,9 @@ public class ChessGame {
                 isCastling = true;
             }
         }
-        boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN && start.getColumn() != end.getColumn() && board.getPiece(end) == null;
+        boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN &&
+                start.getColumn() != end.getColumn() &&
+                board.getPiece(end) == null;
 
         if (move.getPromotionPiece() != null) {
             ChessPiece promoted = new ChessPiece(teamTurn, move.getPromotionPiece());
@@ -170,7 +182,9 @@ public class ChessGame {
                     break;
                 }
             }
-            if (kingPosition != null) break;
+            if (kingPosition != null) {
+                break;
+            }
         }
 
         return isKingInDanger(teamColor, kingPosition, board);
@@ -334,7 +348,9 @@ public class ChessGame {
         ChessPosition end = move.getEndPosition();
         ChessPiece king = board.getPiece(end);
 
-        if (king == null || king.getPieceType() != ChessPiece.PieceType.KING) return;
+        if (king == null || king.getPieceType() != ChessPiece.PieceType.KING) {
+            return;
+        }
 
         int row = start.getRow();
         int startCol = start.getColumn();
@@ -347,7 +363,9 @@ public class ChessGame {
             ChessPiece rook = board.getPiece(rookStart);
             board.addPiece(rookEnd, rook);
             board.addPiece(rookStart, null);
-            if (rook != null) rook.setMoved(true);
+            if (rook != null) {
+                rook.setMoved(true);
+            }
         } else if (startCol - endCol == 2) {
             // Queen side
             ChessPosition rookStart = new ChessPosition(row, 1);
@@ -355,7 +373,9 @@ public class ChessGame {
             ChessPiece rook = board.getPiece(rookStart);
             board.addPiece(rookEnd, rook);
             board.addPiece(rookStart, null);
-            if (rook != null) rook.setMoved(true);
+            if (rook != null) {
+                rook.setMoved(true);
+            }
         }
     }
 }

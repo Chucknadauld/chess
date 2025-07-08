@@ -259,7 +259,9 @@ public class ChessPiece {
     }
 
     private void checkCastlingMoves(List<ChessMove> moves, ChessBoard board, ChessPosition kingPosition) {
-        if (this.hasMoved || this.type != PieceType.KING) return;
+        if (this.hasMoved || this.type != PieceType.KING) {
+            return;
+        }
 
         ChessGame.TeamColor color = this.pieceColor;
         int row = kingPosition.getRow();
