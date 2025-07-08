@@ -80,12 +80,8 @@ public class ChessGame {
             }
 
             // En Passant -_0
-            boolean isEnPassant = false;
-            if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-                if (startPosition.getColumn() != move.getEndPosition().getColumn() && board.getPiece(move.getEndPosition()) == null) {
-                    isEnPassant = true;
-                }
-            }
+            boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN && startPosition.getColumn() != move.getEndPosition().getColumn() && board.getPiece(move.getEndPosition()) == null;
+
             if (isEnPassant) {
                 ChessPosition capturedPawnPos = new ChessPosition(startPosition.getRow(), move.getEndPosition().getColumn());
                 simulatedBoard.addPiece(capturedPawnPos, null);
@@ -126,12 +122,7 @@ public class ChessGame {
                 isCastling = true;
             }
         }
-        boolean isEnPassant = false;
-        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            if (start.getColumn() != end.getColumn() && board.getPiece(end) == null) {
-                isEnPassant = true;
-            }
-        }
+        boolean isEnPassant = piece.getPieceType() == ChessPiece.PieceType.PAWN && start.getColumn() != end.getColumn() && board.getPiece(end) == null;
 
         if (move.getPromotionPiece() != null) {
             ChessPiece promoted = new ChessPiece(teamTurn, move.getPromotionPiece());
@@ -182,23 +173,33 @@ public class ChessGame {
             if (kingPosition != null) break;
         }
 
+        return isKingInDanger(teamColor, kingPosition, board);
+    }
+
+    static boolean isKingInDanger(TeamColor teamColor, ChessPosition kingPosition, ChessBoard board) {
         for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition pos = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(pos);
+            for (int column = 1; column <= 8; column++) {
+                ChessPosition position = new ChessPosition(row, column);
+                ChessPiece piece = board.getPiece(position);
 
-                if (piece != null && piece.getTeamColor() != teamColor) {
-                    Collection<ChessMove> moves = piece.pieceMoves(board, pos);
-
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
-                    }
+                if (isEnemyPiece(piece, teamColor) && threatensKing(piece, position, board, kingPosition)) {
+                    return true;
                 }
             }
         }
+        return false;
+    }
 
+    private static boolean isEnemyPiece(ChessPiece piece, TeamColor teamColor) {
+        return piece != null && piece.getTeamColor() != teamColor;
+    }
+
+    private static boolean threatensKing(ChessPiece piece, ChessPosition from, ChessBoard board, ChessPosition kingPosition) {
+        for (ChessMove move : piece.pieceMoves(board, from)) {
+            if (move.getEndPosition().equals(kingPosition)) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -213,21 +214,7 @@ public class ChessGame {
             return false;
         }
 
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition pos = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(pos);
-
-                if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> moves = validMoves(pos);
-                    if (!moves.isEmpty()) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return hasNoMoves(teamColor);
     }
 
 
@@ -243,6 +230,10 @@ public class ChessGame {
             return false;
         }
 
+        return hasNoMoves(teamColor);
+    }
+
+    private boolean hasNoMoves(TeamColor teamColor) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition pos = new ChessPosition(row, col);
@@ -290,10 +281,6 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
-    }
-
-    public ChessMove getLastMove() {
-        return lastMove;
     }
 
     private Collection<ChessMove> getEnPassantMoves(ChessPosition startPosition, ChessPiece piece) {

@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static chess.ChessGame.isKingInDanger;
+
 /**
  * Represents a single chess piece
  * <p>
@@ -25,6 +27,7 @@ public class ChessPiece {
     public ChessPiece(ChessPiece other) {
         this.pieceColor = other.pieceColor;
         this.type = other.type;
+        this.hasMoved = other.hasMoved;
     }
 
 
@@ -54,8 +57,8 @@ public class ChessPiece {
         return type;
     }
 
-    public boolean hasMoved() {
-        return hasMoved;
+    public boolean hasNotMoved() {
+        return !hasMoved;
     }
 
     public void setMoved(boolean moved) {
@@ -265,14 +268,14 @@ public class ChessPiece {
         ChessPosition rookPos = new ChessPosition(row, 8);
         ChessPiece rook = board.getPiece(rookPos);
 
-        if (rook != null && rook.getPieceType() == PieceType.ROOK && !rook.hasMoved()) {
+        if (rook != null && rook.getPieceType() == PieceType.ROOK && rook.hasNotMoved()) {
             ChessPosition square1 = new ChessPosition(row, 6);
             ChessPosition square2 = new ChessPosition(row, 7);
 
             if (board.getPiece(square1) == null && board.getPiece(square2) == null &&
-                    !isSquareInCheck(board, kingPosition, color) &&
-                    !isSquareInCheck(board, square1, color) &&
-                    !isSquareInCheck(board, square2, color)) {
+                    isSquareInCheck(board, kingPosition, color) &&
+                    isSquareInCheck(board, square1, color) &&
+                    isSquareInCheck(board, square2, color)) {
                 moves.add(new ChessMove(kingPosition, square2, null));
             }
         }
@@ -281,37 +284,22 @@ public class ChessPiece {
         rookPos = new ChessPosition(row, 1);
         rook = board.getPiece(rookPos);
 
-        if (rook != null && rook.getPieceType() == PieceType.ROOK && !rook.hasMoved()) {
+        if (rook != null && rook.getPieceType() == PieceType.ROOK && rook.hasNotMoved()) {
             ChessPosition square1 = new ChessPosition(row, 2);
             ChessPosition square2 = new ChessPosition(row, 3);
             ChessPosition square3 = new ChessPosition(row, 4);
 
             if (board.getPiece(square1) == null && board.getPiece(square2) == null && board.getPiece(square3) == null &&
-                    !isSquareInCheck(board, kingPosition, color) &&
-                    !isSquareInCheck(board, square2, color) &&
-                    !isSquareInCheck(board, square3, color)) {
+                    isSquareInCheck(board, kingPosition, color) &&
+                    isSquareInCheck(board, square2, color) &&
+                    isSquareInCheck(board, square3, color)) {
                 moves.add(new ChessMove(kingPosition, square2, null));
             }
         }
     }
 
     private boolean isSquareInCheck(ChessBoard board, ChessPosition square, ChessGame.TeamColor color) {
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition from = new ChessPosition(row, col);
-                ChessPiece attacker = board.getPiece(from);
-
-                if (attacker != null && attacker.getTeamColor() != color) {
-                    Collection<ChessMove> theirMoves = attacker.pieceMoves(board, from);
-                    for (ChessMove move : theirMoves) {
-                        if (move.getEndPosition().equals(square)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return !isKingInDanger(color, square, board);
     }
 
 }
