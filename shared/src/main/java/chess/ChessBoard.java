@@ -54,6 +54,23 @@ public class ChessBoard {
         addBackRow(8, ChessGame.TeamColor.BLACK);
     }
 
+    public ChessBoard copy() {
+        ChessBoard copy = new ChessBoard();
+
+        for (int col = 1; col <= 8; col++) {
+            for (int row = 1; row <= 8; row++) {
+                ChessPosition pos = new ChessPosition(row, col);
+                ChessPiece piece = this.getPiece(pos);
+
+                if (piece != null) {
+                    copy.addPiece(pos, new ChessPiece(piece));
+                }
+            }
+        }
+
+        return copy;
+    }
+
     private void clearBoard() {
         board = new ChessPiece[8][8];
     }

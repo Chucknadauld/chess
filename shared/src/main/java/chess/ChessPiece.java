@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static chess.ChessGame.isKingInDanger;
+
 /**
  * Represents a single chess piece
  * <p>
@@ -15,11 +17,19 @@ public class ChessPiece {
 
     private final ChessGame.TeamColor pieceColor;
     private final ChessPiece.PieceType type;
+    private boolean hasMoved = false;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
     }
+
+    public ChessPiece(ChessPiece other) {
+        this.pieceColor = other.pieceColor;
+        this.type = other.type;
+        this.hasMoved = other.hasMoved;
+    }
+
 
     /**
      * The various different chess piece options
@@ -45,6 +55,14 @@ public class ChessPiece {
      */
     public PieceType getPieceType() {
         return type;
+    }
+
+    public boolean hasNotMoved() {
+        return !hasMoved;
+    }
+
+    public void setMoved(boolean moved) {
+        this.hasMoved = moved;
     }
 
     /**
@@ -78,6 +96,8 @@ public class ChessPiece {
         };
 
         checkPossibleMoves(moves, board, position, possibleMoves);
+        checkCastlingMoves(moves, board, position);
+
         return moves;
     }
 
@@ -237,4 +257,49 @@ public class ChessPiece {
             }
         }
     }
+
+    private void checkCastlingMoves(List<ChessMove> moves, ChessBoard board, ChessPosition kingPosition) {
+        if (this.hasMoved || this.type != PieceType.KING) return;
+
+        ChessGame.TeamColor color = this.pieceColor;
+        int row = kingPosition.getRow();
+
+        // King side castling
+        ChessPosition rookPos = new ChessPosition(row, 8);
+        ChessPiece rook = board.getPiece(rookPos);
+
+        if (rook != null && rook.getPieceType() == PieceType.ROOK && rook.hasNotMoved()) {
+            ChessPosition square1 = new ChessPosition(row, 6);
+            ChessPosition square2 = new ChessPosition(row, 7);
+
+            if (board.getPiece(square1) == null && board.getPiece(square2) == null &&
+                    isSquareInCheck(board, kingPosition, color) &&
+                    isSquareInCheck(board, square1, color) &&
+                    isSquareInCheck(board, square2, color)) {
+                moves.add(new ChessMove(kingPosition, square2, null));
+            }
+        }
+
+        // Queen side castling
+        rookPos = new ChessPosition(row, 1);
+        rook = board.getPiece(rookPos);
+
+        if (rook != null && rook.getPieceType() == PieceType.ROOK && rook.hasNotMoved()) {
+            ChessPosition square1 = new ChessPosition(row, 2);
+            ChessPosition square2 = new ChessPosition(row, 3);
+            ChessPosition square3 = new ChessPosition(row, 4);
+
+            if (board.getPiece(square1) == null && board.getPiece(square2) == null && board.getPiece(square3) == null &&
+                    isSquareInCheck(board, kingPosition, color) &&
+                    isSquareInCheck(board, square2, color) &&
+                    isSquareInCheck(board, square3, color)) {
+                moves.add(new ChessMove(kingPosition, square2, null));
+            }
+        }
+    }
+
+    private boolean isSquareInCheck(ChessBoard board, ChessPosition square, ChessGame.TeamColor color) {
+        return !isKingInDanger(color, square, board);
+    }
+
 }
