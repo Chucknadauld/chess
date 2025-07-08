@@ -108,14 +108,19 @@ public class ChessGame {
         }
 
         if (move.getPromotionPiece() != null) {
-            board.addPiece(end, new ChessPiece(teamTurn, move.getPromotionPiece()));
+            ChessPiece promotedPiece = new ChessPiece(teamTurn, move.getPromotionPiece());
+            promotedPiece.setMoved(true);
+            board.addPiece(end, promotedPiece);
         } else {
             board.addPiece(end, piece);
+            piece.setMoved(true);
         }
-        board.addPiece(start, null);
 
+        board.addPiece(start, null);
+        castling(move);
         teamTurn = (teamTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
+
 
     /**
      * Determines if the given team is in check
@@ -250,5 +255,37 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
+    }
+
+    public void castling(ChessMove move) {
+        ChessPosition start = move.getStartPosition();
+        ChessPosition end = move.getEndPosition();
+        ChessPiece piece = board.getPiece(end);
+
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            int startCol = start.getColumn();
+            int endCol = end.getColumn();
+            int row = start.getRow();
+
+            // King side castling
+            if (endCol - startCol == 2) {
+                ChessPosition rookStart = new ChessPosition(row, 8);
+                ChessPosition rookEnd = new ChessPosition(row, 6);
+                ChessPiece rook = board.getPiece(rookStart);
+                board.addPiece(rookEnd, rook);
+                board.addPiece(rookStart, null);
+                if (rook != null) rook.setMoved(true);
+            }
+
+            // Queen side castling
+            else if (startCol - endCol == 2) {
+                ChessPosition rookStart = new ChessPosition(row, 1);
+                ChessPosition rookEnd = new ChessPosition(row, 4);
+                ChessPiece rook = board.getPiece(rookStart);
+                board.addPiece(rookEnd, rook);
+                board.addPiece(rookStart, null);
+                if (rook != null) rook.setMoved(true);
+            }
+        }
     }
 }
