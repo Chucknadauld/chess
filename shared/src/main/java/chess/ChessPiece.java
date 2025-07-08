@@ -15,6 +15,7 @@ public class ChessPiece {
 
     private final ChessGame.TeamColor pieceColor;
     private final ChessPiece.PieceType type;
+    private boolean hasMoved = false;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceColor = pieceColor;
@@ -53,6 +54,14 @@ public class ChessPiece {
         return type;
     }
 
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setMoved(boolean moved) {
+        this.hasMoved = moved;
+    }
+
     /**
      * Calculates all the positions a chess piece can move to
      * Does not take into account moves that are illegal due to leaving the king in
@@ -84,6 +93,8 @@ public class ChessPiece {
         };
 
         checkPossibleMoves(moves, board, position, possibleMoves);
+        checkCastlingMoves(moves, board, position);
+
         return moves;
     }
 
@@ -241,6 +252,32 @@ public class ChessPiece {
                     moves.add(new ChessMove(position, newPosition, null));
                 }
             }
+        }
+    }
+
+    private void checkCastlingMoves(List<ChessMove> moves, ChessBoard board, ChessPosition kingPosition) {
+        ChessPiece king = board.getPiece(kingPosition);
+        if (king == null || king.getPieceType() != PieceType.KING || king.hasMoved()) return;
+
+        int row = kingPosition.getRow();
+
+        // King side castle
+        ChessPosition rookPositionKingSide = new ChessPosition(row, 8);
+        ChessPiece rookKingSide = board.getPiece(rookPositionKingSide);
+        if (rookKingSide != null && rookKingSide.getPieceType() == PieceType.ROOK && !rookKingSide.hasMoved()
+                && board.getPiece(new ChessPosition(row, 6)) == null
+                && board.getPiece(new ChessPosition(row, 7)) == null) {
+            moves.add(new ChessMove(kingPosition, new ChessPosition(row, 7), null));
+        }
+
+        // Queen side castle
+        ChessPosition rookPositionQueenSide = new ChessPosition(row, 1);
+        ChessPiece rookQueenSide = board.getPiece(rookPositionQueenSide);
+        if (rookQueenSide != null && rookQueenSide.getPieceType() == PieceType.ROOK && !rookQueenSide.hasMoved()
+                && board.getPiece(new ChessPosition(row, 2)) == null
+                && board.getPiece(new ChessPosition(row, 3)) == null
+                && board.getPiece(new ChessPosition(row, 4)) == null) {
+            moves.add(new ChessMove(kingPosition, new ChessPosition(row, 3), null));
         }
     }
 }
