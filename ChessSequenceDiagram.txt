@@ -1,0 +1,158 @@
+actor Client
+participant Server
+participant Handler
+participant Service
+participant DataAccess
+database db
+
+entryspacing 0.9
+
+group#43829c #lightblue Register
+Client -> Server: [POST] /user\n{"username":" ", "password":" ", "email":" "}
+Server -> Handler: {"username":" ", "password":" ", "email":" "}
+Handler -> Service: register(RegisterRequest)
+Service -> DataAccess: getUser(username)
+DataAccess -> db: Find UserData by username
+break User with username already exists
+DataAccess --> Service: UserData
+Service --> Server: AlreadyTakenException
+Server --> Client: 403\n{"message": "Error: username already taken"}
+end
+DataAccess --> Service: null
+Service -> DataAccess: createUser(userData)
+DataAccess -> db: Add UserData
+Service -> DataAccess: createAuth(authData)
+DataAccess -> db: Add AuthData
+Service --> Handler: RegisterResult
+Handler --> Server: {"username":" ", "authToken":" "}
+Server --> Client: 200\n{"username":" ", "authToken":" "}
+end
+
+group#orange #FCEDCA Login
+Client -> Server: [POST] /session\n{"username":" ", "password":" "}
+Server -> Handler: {"username":" ", "password":" "}
+Handler -> Service: login(LoginRequest)
+Service -> DataAccess: getUser(username)
+DataAccess -> db: Find UserData by username
+break User not found
+DataAccess --> Service: null
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+DataAccess --> Service: UserData
+break Password mismatch
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+Service -> DataAccess: createAuth(authData)
+DataAccess -> db: Add AuthData
+Service --> Handler: LoginResult
+Handler --> Server: {"username":" ", "authToken":" "}
+Server --> Client: 200\n{"username":" ", "authToken":" "}
+end
+
+group#green #lightgreen Logout
+Client -> Server: [DELETE] /session\nAuthorization: authToken
+Server -> Handler: Authorization header
+Handler -> Service: logout(LogoutRequest)
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> db: Find AuthData by authToken
+break AuthData not found
+DataAccess --> Service: null
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+DataAccess --> Service: AuthData
+Service -> DataAccess: deleteAuth(authToken)
+DataAccess -> db: Remove AuthData
+Service --> Handler: {}
+Handler --> Server: {}
+Server --> Client: 200\n{}
+end
+
+group#red #pink List Games
+Client -> Server: [GET] /game\nAuthorization: authToken
+Server -> Handler: Authorization header
+Handler -> Service: listGames(ListGamesRequest)
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> db: Find AuthData
+break AuthData not found
+DataAccess --> Service: null
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+DataAccess --> Service: AuthData
+Service -> DataAccess: listGames()
+DataAccess -> db: Get all GameData
+DataAccess --> Service: List<GameData>
+Service --> Handler: ListGamesResult
+Handler --> Server: {games:[...]}
+Server --> Client: 200\n{games:[...]}
+end
+
+group#d790e0 #E3CCE6 Create Game 
+Client -> Server: [POST] /game\nAuthorization: authToken\n{"gameName":""}
+Server -> Handler: Authorization header + JSON body
+Handler -> Service: createGame(CreateGameRequest)
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> db: Find AuthData
+break AuthData not found
+DataAccess --> Service: null
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+DataAccess --> Service: AuthData
+Service -> DataAccess: createGame(GameData)
+DataAccess -> db: Add GameData
+DataAccess --> Service: gameID
+Service --> Handler: CreateGameResult
+Handler --> Server: {"gameID":1234}
+Server --> Client: 200\n{"gameID":1234}
+end
+
+group#yellow #lightyellow Join Game #black
+Client -> Server: [PUT] /game\nAuthorization: authToken\n{"playerColor":"WHITE", "gameID":1234}
+Server -> Handler: Authorization header + JSON body
+Handler -> Service: joinGame(JoinGameRequest)
+note over Handler: JoinGameRequest is built\nfrom both header & body
+Service -> DataAccess: getAuth(authToken)
+DataAccess -> db: Find AuthData
+break AuthData not found
+DataAccess --> Service: null
+Service --> Server: UnauthorizedException
+Server --> Client: 401\n{"message": "Error: unauthorized"}
+end
+DataAccess --> Service: AuthData
+Service -> DataAccess: getGame(gameID)
+DataAccess -> db: Find GameData
+break Game not found
+DataAccess --> Service: null
+Service --> Server: BadRequestException
+Server --> Client: 400\n{"message": "Error: bad request"}
+end
+DataAccess --> Service: GameData
+break Spot already taken
+Service --> Server: AlreadyTakenException
+Server --> Client: 403\n{"message": "Error: already taken"}
+end
+Service -> DataAccess: updateGame(updatedGameData)
+DataAccess -> db: Update GameData
+Service --> Handler: {}
+Handler --> Server: {}
+Server --> Client: 200\n{}
+end
+
+group#gray #lightgray Clear application 
+Client -> Server: [DELETE] /db
+Server -> Handler: clear()
+Handler -> Service: clear()
+Service -> DataAccess: clearGames()
+DataAccess -> db: Delete all GameData
+Service -> DataAccess: clearAuths()
+DataAccess -> db: Delete all AuthData
+Service -> DataAccess: clearUsers()
+DataAccess -> db: Delete all UserData
+Service --> Handler: {}
+Handler --> Server: {}
+Server --> Client: 200\n{}
+end
