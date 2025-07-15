@@ -12,6 +12,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
         delete("/db", new ClearHandler());
+        post("/user", new RegisterHandler());
 
         Spark.awaitInitialization();
         return Spark.port();
