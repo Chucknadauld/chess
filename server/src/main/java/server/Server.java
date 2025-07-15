@@ -13,9 +13,10 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
-        delete("/db", new ClearHandler());
+        delete("/db", new ClearHandler(memoryDataAccess));
         post("/user", new RegisterHandler(memoryDataAccess));
         post("/session", new LoginHandler(memoryDataAccess));
+        delete("/session", new LogoutHandler(memoryDataAccess));
 
         Spark.awaitInitialization();
         return Spark.port();

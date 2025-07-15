@@ -4,8 +4,10 @@ import dataaccess.*;
 import model.AuthData;
 import model.UserData;
 import service.requests.LoginRequest;
+import service.requests.LogoutRequest;
 import service.requests.RegisterRequest;
 import service.results.LoginResult;
+import service.results.LogoutResult;
 import service.results.RegisterResult;
 
 import java.util.UUID;
@@ -51,5 +53,18 @@ public class UserService {
         dataAccess.createAuth(auth);
 
         return new LoginResult(user.username(), token);
+    }
+
+    public LogoutResult logout(LogoutRequest request) throws DataAccessException {
+        // Check if auth token exists
+        AuthData authData = dataAccess.getAuth(request.authToken());
+        if (authData == null) {
+            throw new UnauthorizedException("Invalid auth token");
+        }
+
+        // Delete the auth token
+        dataAccess.deleteAuth(request.authToken());
+
+        return new LogoutResult();
     }
 }

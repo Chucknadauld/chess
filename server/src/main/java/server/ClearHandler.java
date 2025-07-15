@@ -2,6 +2,7 @@ package server;
 
 import com.google.gson.Gson;
 import service.ClearService;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import spark.Request;
 import spark.Response;
@@ -10,9 +11,15 @@ import spark.Route;
 import java.util.HashMap;
 
 public class ClearHandler implements Route {
+    private final DataAccess dataAccess;
+
+    public ClearHandler(DataAccess dataAccess) {
+        this.dataAccess = dataAccess;
+    }
+
     @Override
     public Object handle(Request request, Response response) {
-        ClearService service = new ClearService();
+        ClearService service = new ClearService(dataAccess);
         try {
             service.clearApplication();
             response.status(200);
