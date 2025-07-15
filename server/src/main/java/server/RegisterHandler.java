@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import service.UserService;
 import service.requests.RegisterRequest;
 import service.results.RegisterResult;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import service.AlreadyTakenException;
 import spark.Request;
@@ -14,7 +15,12 @@ import java.util.Map;
 
 public class RegisterHandler implements Route {
 
+    private final DataAccess dataAccess;
     private final Gson gson = new Gson();
+
+    public RegisterHandler(DataAccess dataAccess) {
+        this.dataAccess = dataAccess;
+    }
 
     @Override
     public Object handle(Request request, Response response) {
@@ -31,7 +37,7 @@ public class RegisterHandler implements Route {
             }
 
             // Call the service
-            UserService service = new UserService();
+            UserService service = new UserService(dataAccess);
             RegisterResult result = service.register(req);
 
             response.status(200);

@@ -8,13 +8,13 @@ import model.AuthData;
 
 public class MemoryDataAccess implements DataAccess {
 
-    private final HashMap<String, Object> dummyStore = new HashMap<>(); //placeholderx
     private final Map<String, UserData> users = new HashMap<>();
     private final Map<String, AuthData> authTokens = new HashMap<>();
 
     @Override
     public void clear() throws DataAccessException {
-        dummyStore.clear();
+        users.clear();
+        authTokens.clear();
     }
 
     @Override

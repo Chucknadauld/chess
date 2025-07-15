@@ -3,13 +3,19 @@ package service;
 import dataaccess.*;
 import model.AuthData;
 import model.UserData;
+import service.requests.LoginRequest;
 import service.requests.RegisterRequest;
+import service.results.LoginResult;
 import service.results.RegisterResult;
 
 import java.util.UUID;
 
 public class UserService {
-    private final DataAccess dataAccess = new MemoryDataAccess(); // eventually injectx
+    private final DataAccess dataAccess;
+
+    public UserService(DataAccess dataAccess) {
+        this.dataAccess = dataAccess;
+    }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
         // Check if username exists
@@ -29,5 +35,21 @@ public class UserService {
         dataAccess.createAuth(authData);
 
         return new RegisterResult(userData.username(), token);
+    }
+
+    public LoginResult login(LoginRequest request) throws DataAccessException {
+        // Find user
+        UserData user = dataAccess.getUser(request.username());
+
+        if (user == null || !user.password().equals(request.password())) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        // Generate token and save it
+        String token = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(token, user.username());
+        dataAccess.createAuth(auth);
+
+        return new LoginResult(user.username(), token);
     }
 }
