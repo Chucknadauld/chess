@@ -77,8 +77,8 @@ public class GameService {
 
         String playerColor = request.playerColor();
 
-        if (!playerColor.equals("BLACK") && !playerColor.equals("WHITE")) {
-            throw new DataAccessException("Not a valid player color");
+        if (playerColor == null || (!playerColor.equals("BLACK") && !playerColor.equals("WHITE"))) {
+            throw new BadRequestException("Invalid player color");
         }
 
         String currentPlayer = (playerColor.equals("WHITE")) ? gameData.whiteUsername() : gameData.blackUsername();

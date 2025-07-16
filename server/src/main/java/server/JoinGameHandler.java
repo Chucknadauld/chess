@@ -29,10 +29,16 @@ public class JoinGameHandler implements Route {
             // Get auth token from header
             String authToken = request.headers("authorization");
 
-            // Get JoinRequest from body
-            Map<String, Object> body = gson.fromJson(request.body(), Map.class);
-            String playerColor = (String) body.get("playerColor");
-            int gameID = ((Double) body.get("gameID")).intValue();
+            String playerColor;
+            int gameID;
+            try {
+                Map<String, Object> body = gson.fromJson(request.body(), Map.class);
+                playerColor = (String) body.get("playerColor");
+                gameID = ((Double) body.get("gameID")).intValue();
+            } catch (Exception parseException) {
+                response.status(400);
+                return gson.toJson(Map.of("message", "Error: bad request"));
+            }
 
             // Call the service
             GameService service = new GameService(dataAccess);
@@ -42,7 +48,6 @@ public class JoinGameHandler implements Route {
             response.status(200);
             return gson.toJson(result);
 
-        // Catch errors
         } catch (UnauthorizedException e) {
             response.status(401);
             return gson.toJson(Map.of("message", "Error: unauthorized"));

@@ -360,7 +360,7 @@ public class GameServiceTest {
 
         JoinGameRequest joinGameRequest = new JoinGameRequest(authToken, "RED", gameID);
 
-        assertThrows(DataAccessException.class, () -> {
+        assertThrows(BadRequestException.class, () -> {
             gameService.joinGame(joinGameRequest);
         });
     }
