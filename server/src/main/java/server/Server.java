@@ -19,6 +19,12 @@ public class Server {
         delete("/session", new LogoutHandler(memoryDataAccess));
         post("/game", new CreateGameHandler(memoryDataAccess));
 
+        Spark.exception(Exception.class, (exception, request, response) -> {
+            response.status(500);
+            response.type("application/json");
+            response.body("{\"message\": \"Error: " + exception.getMessage() + "\"}");
+        });
+
         Spark.awaitInitialization();
         return Spark.port();
     }

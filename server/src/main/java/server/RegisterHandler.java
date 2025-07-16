@@ -26,19 +26,19 @@ public class RegisterHandler implements Route {
     public Object handle(Request request, Response response) {
         try {
             // Parse JSON into RegisterRequest
-            RegisterRequest req = gson.fromJson(request.body(), RegisterRequest.class);
+            RegisterRequest registerRequest = gson.fromJson(request.body(), RegisterRequest.class);
 
             // Validate input
-            if (req.username() == null || req.username().isBlank() ||
-                    req.password() == null || req.password().isBlank() ||
-                    req.email() == null || req.email().isBlank()) {
+            if (registerRequest.username() == null || registerRequest.username().isBlank() ||
+                    registerRequest.password() == null || registerRequest.password().isBlank() ||
+                    registerRequest.email() == null || registerRequest.email().isBlank()) {
                 response.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
 
             // Call the service
             UserService service = new UserService(dataAccess);
-            RegisterResult result = service.register(req);
+            RegisterResult result = service.register(registerRequest);
 
             response.status(200);
             return gson.toJson(result);

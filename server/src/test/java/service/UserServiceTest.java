@@ -18,9 +18,9 @@ public class UserServiceTest {
     @Test
     public void registerPositiveTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
-        RegisterRequest req = new RegisterRequest("chuck", "password123", "chuck@email.com");
+        RegisterRequest registerRequest = new RegisterRequest("chuck", "password123", "chuck@email.com");
 
-        RegisterResult result = service.register(req);
+        RegisterResult result = service.register(registerRequest);
 
         assertEquals("chuck", result.username());
         assertNotNull(result.authToken());
@@ -30,13 +30,13 @@ public class UserServiceTest {
     public void registerDuplicateUsernameTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        RegisterRequest req1 = new RegisterRequest("charlie", "pass1", "charlie@email.com");
-        RegisterRequest req2 = new RegisterRequest("charlie", "pass2", "charlie2@email.com");
+        RegisterRequest registerRequest1 = new RegisterRequest("charlie", "pass1", "charlie@email.com");
+        RegisterRequest registerRequest2 = new RegisterRequest("charlie", "pass2", "charlie2@email.com");
 
-        service.register(req1); // should succeed
+        service.register(registerRequest1);
 
         assertThrows(AlreadyTakenException.class, () -> {
-            service.register(req2); // should fail
+            service.register(registerRequest2);
         });
     }
 
@@ -44,14 +44,10 @@ public class UserServiceTest {
     public void registerEmptyUsernameTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
         
-        // Service layer accepts empty username - validation happens in handler
-        // But let's test with null to see behavior
-        RegisterRequest req = new RegisterRequest("", "password", "email@test.com");
+        RegisterRequest registerRequest = new RegisterRequest("", "password", "email@test.com");
         
-        // Service doesn't validate empty strings, that's handler's job
-        // So this should actually succeed at service level
         assertDoesNotThrow(() -> {
-            service.register(req);
+            service.register(registerRequest);
         });
     }
 
@@ -59,13 +55,11 @@ public class UserServiceTest {
     public void loginPositiveTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // First register a user
-        RegisterRequest regReq = new RegisterRequest("testuser", "testpass", "test@email.com");
-        service.register(regReq);
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        service.register(registerRequest);
 
-        // Now try to login
-        LoginRequest loginReq = new LoginRequest("testuser", "testpass");
-        LoginResult result = service.login(loginReq);
+        LoginRequest loginRequest = new LoginRequest("testuser", "testpass");
+        LoginResult result = service.login(loginRequest);
 
         assertEquals("testuser", result.username());
         assertNotNull(result.authToken());
@@ -75,11 +69,10 @@ public class UserServiceTest {
     public void loginUserNotFoundTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // Try to login with non-existent user
-        LoginRequest loginReq = new LoginRequest("nonexistent", "password");
+        LoginRequest loginRequest = new LoginRequest("nonexistent", "password");
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.login(loginReq);
+            service.login(loginRequest);
         });
     }
 
@@ -87,15 +80,13 @@ public class UserServiceTest {
     public void loginWrongPasswordTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // First register a user
-        RegisterRequest regReq = new RegisterRequest("testuser", "correctpass", "test@email.com");
-        service.register(regReq);
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "correctpass", "test@email.com");
+        service.register(registerRequest);
 
-        // Try to login with wrong password
-        LoginRequest loginReq = new LoginRequest("testuser", "wrongpass");
+        LoginRequest loginRequest = new LoginRequest("testuser", "wrongpass");
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.login(loginReq);
+            service.login(loginRequest);
         });
     }
 
@@ -103,15 +94,13 @@ public class UserServiceTest {
     public void loginNullPasswordTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // First register a user with a real password
-        RegisterRequest regReq = new RegisterRequest("testuser", "realpass", "test@email.com");
-        service.register(regReq);
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "realpass", "test@email.com");
+        service.register(registerRequest);
 
-        // Try to login with null password
-        LoginRequest loginReq = new LoginRequest("testuser", null);
+        LoginRequest loginRequest = new LoginRequest("testuser", null);
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.login(loginReq);
+            service.login(loginRequest);
         });
     }
 
@@ -119,16 +108,13 @@ public class UserServiceTest {
     public void logoutPositiveTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // First register and login to get a valid auth token
-        RegisterRequest regReq = new RegisterRequest("testuser", "testpass", "test@email.com");
-        RegisterResult regResult = service.register(regReq);
-        String authToken = regResult.authToken();
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        RegisterResult registerResult = service.register(registerRequest);
+        String authToken = registerResult.authToken();
 
-        // Now logout with the valid token
-        LogoutRequest logoutReq = new LogoutRequest(authToken);
-        LogoutResult result = service.logout(logoutReq);
+        LogoutRequest logoutRequest = new LogoutRequest(authToken);
+        LogoutResult result = service.logout(logoutRequest);
 
-        // Should succeed without throwing exception
         assertNotNull(result);
     }
 
@@ -136,11 +122,10 @@ public class UserServiceTest {
     public void logoutInvalidTokenTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // Try to logout with invalid auth token
-        LogoutRequest logoutReq = new LogoutRequest("invalid-token");
+        LogoutRequest logoutRequest = new LogoutRequest("invalid-token");
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.logout(logoutReq);
+            service.logout(logoutRequest);
         });
     }
 
@@ -148,18 +133,15 @@ public class UserServiceTest {
     public void logoutTokenInvalidatedTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // Register and get token
-        RegisterRequest regReq = new RegisterRequest("testuser", "testpass", "test@email.com");
-        RegisterResult regResult = service.register(regReq);
-        String authToken = regResult.authToken();
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        RegisterResult registerResult = service.register(registerRequest);
+        String authToken = registerResult.authToken();
 
-        // First logout should work
-        LogoutRequest logoutReq = new LogoutRequest(authToken);
-        service.logout(logoutReq); // Should succeed
+        LogoutRequest logoutRequest = new LogoutRequest(authToken);
+        service.logout(logoutRequest);
 
-        // Second logout with same token should fail (token was deleted)
         assertThrows(UnauthorizedException.class, () -> {
-            service.logout(logoutReq); // Should fail - token was deleted
+            service.logout(logoutRequest);
         });
     }
 
@@ -167,11 +149,10 @@ public class UserServiceTest {
     public void logoutNullTokenTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // Try to logout with null auth token
-        LogoutRequest logoutReq = new LogoutRequest(null);
+        LogoutRequest logoutRequest = new LogoutRequest(null);
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.logout(logoutReq);
+            service.logout(logoutRequest);
         });
     }
 
@@ -179,18 +160,15 @@ public class UserServiceTest {
     public void multipleLoginsGenerateDifferentTokensTest() throws DataAccessException {
         UserService service = new UserService(new MemoryDataAccess());
 
-        // Register a user
-        RegisterRequest regReq = new RegisterRequest("testuser", "testpass", "test@email.com");
-        RegisterResult regResult = service.register(regReq);
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        RegisterResult registerResult = service.register(registerRequest);
 
-        // Login twice
-        LoginRequest loginReq = new LoginRequest("testuser", "testpass");
-        LoginResult login1 = service.login(loginReq);
-        LoginResult login2 = service.login(loginReq);
+        LoginRequest loginRequest = new LoginRequest("testuser", "testpass");
+        LoginResult login1 = service.login(loginRequest);
+        LoginResult login2 = service.login(loginRequest);
 
-        // Tokens should be different
-        assertNotEquals(regResult.authToken(), login1.authToken());
+        assertNotEquals(registerResult.authToken(), login1.authToken());
         assertNotEquals(login1.authToken(), login2.authToken());
-        assertNotEquals(regResult.authToken(), login2.authToken());
+        assertNotEquals(registerResult.authToken(), login2.authToken());
     }
 }

@@ -24,11 +24,11 @@ public class LoginHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            LoginRequest req = gson.fromJson(request.body(), LoginRequest.class);
+            LoginRequest loginRequest = gson.fromJson(request.body(), LoginRequest.class);
 
             // Parse and validate request
-            String username = req.username();
-            String password = req.password();
+            String username = loginRequest.username();
+            String password = loginRequest.password();
             if (username == null || username.isBlank() ||
                     password == null || password.isBlank()) {
                 response.status(400);
@@ -37,7 +37,7 @@ public class LoginHandler implements Route {
 
             // Call the service layer
             UserService service = new UserService(dataAccess);
-            LoginResult result = service.login(req);
+            LoginResult result = service.login(loginRequest);
 
             response.status(200);
             return gson.toJson(result);

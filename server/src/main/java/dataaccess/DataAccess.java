@@ -9,6 +9,10 @@ import java.util.List;
 
 public interface DataAccess {
     void clear() throws DataAccessException;
+    
+    void clearGames() throws DataAccessException;
+    void clearAuths() throws DataAccessException;
+    void clearUsers() throws DataAccessException;
 
     UserData getUser(String username) throws DataAccessException;
 

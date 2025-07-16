@@ -22,6 +22,21 @@ public class MemoryDataAccess implements DataAccess {
         authTokens.clear();
         games.clear();
     }
+    
+    @Override
+    public void clearGames() throws DataAccessException {
+        games.clear();
+    }
+    
+    @Override
+    public void clearAuths() throws DataAccessException {
+        authTokens.clear();
+    }
+    
+    @Override
+    public void clearUsers() throws DataAccessException {
+        users.clear();
+    }
 
     @Override
     public UserData getUser(String username) {

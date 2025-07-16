@@ -28,8 +28,8 @@ public class GameServiceTest {
         RegisterResult registerResult = userService.register(registerRequest);
         String authToken = registerResult.authToken();
 
-        CreateGameRequest createRequest = new CreateGameRequest(authToken, "Test Game");
-        CreateGameResult result = gameService.createGame(createRequest);
+        CreateGameRequest createGameRequest = new CreateGameRequest(authToken, "Test Game");
+        CreateGameResult result = gameService.createGame(createGameRequest);
 
         assertTrue(result.gameID() > 0);
         assertEquals(1, result.gameID());
@@ -39,10 +39,10 @@ public class GameServiceTest {
     public void createGameInvalidAuthTokenTest() throws DataAccessException {
         GameService service = new GameService(new MemoryDataAccess());
 
-        CreateGameRequest createRequest = new CreateGameRequest("invalid-token", "Test Game");
+        CreateGameRequest createGameRequest = new CreateGameRequest("invalid-token", "Test Game");
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.createGame(createRequest);
+            service.createGame(createGameRequest);
         });
     }
 
@@ -50,10 +50,10 @@ public class GameServiceTest {
     public void createGameNullAuthTokenTest() throws DataAccessException {
         GameService service = new GameService(new MemoryDataAccess());
 
-        CreateGameRequest createRequest = new CreateGameRequest(null, "Test Game");
+        CreateGameRequest createGameRequest = new CreateGameRequest(null, "Test Game");
 
         assertThrows(UnauthorizedException.class, () -> {
-            service.createGame(createRequest);
+            service.createGame(createGameRequest);
         });
     }
 
@@ -67,10 +67,10 @@ public class GameServiceTest {
         RegisterResult registerResult = userService.register(registerRequest);
         String authToken = registerResult.authToken();
 
-        CreateGameRequest createRequest = new CreateGameRequest(authToken, null);
+        CreateGameRequest createGameRequest = new CreateGameRequest(authToken, null);
 
         assertThrows(BadRequestException.class, () -> {
-            gameService.createGame(createRequest);
+            gameService.createGame(createGameRequest);
         });
     }
 
@@ -84,10 +84,10 @@ public class GameServiceTest {
         RegisterResult registerResult = userService.register(registerRequest);
         String authToken = registerResult.authToken();
 
-        CreateGameRequest createRequest = new CreateGameRequest(authToken, "");
+        CreateGameRequest createGameRequest = new CreateGameRequest(authToken, "");
 
         assertThrows(BadRequestException.class, () -> {
-            gameService.createGame(createRequest);
+            gameService.createGame(createGameRequest);
         });
     }
 
@@ -101,13 +101,13 @@ public class GameServiceTest {
         RegisterResult registerResult = userService.register(registerRequest);
         String authToken = registerResult.authToken();
 
-        CreateGameRequest createRequest1 = new CreateGameRequest(authToken, "Game 1");
-        CreateGameRequest createRequest2 = new CreateGameRequest(authToken, "Game 2");
-        CreateGameRequest createRequest3 = new CreateGameRequest(authToken, "Game 3");
+        CreateGameRequest createGameRequest1 = new CreateGameRequest(authToken, "Game 1");
+        CreateGameRequest createGameRequest2 = new CreateGameRequest(authToken, "Game 2");
+        CreateGameRequest createGameRequest3 = new CreateGameRequest(authToken, "Game 3");
 
-        CreateGameResult result1 = gameService.createGame(createRequest1);
-        CreateGameResult result2 = gameService.createGame(createRequest2);
-        CreateGameResult result3 = gameService.createGame(createRequest3);
+        CreateGameResult result1 = gameService.createGame(createGameRequest1);
+        CreateGameResult result2 = gameService.createGame(createGameRequest2);
+        CreateGameResult result3 = gameService.createGame(createGameRequest3);
 
         assertEquals(1, result1.gameID());
         assertEquals(2, result2.gameID());

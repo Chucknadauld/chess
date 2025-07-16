@@ -11,6 +11,8 @@ public class ClearService {
     }
 
     public void clearApplication() throws DataAccessException {
-        dataAccess.clear();
+        dataAccess.clearGames();
+        dataAccess.clearAuths();
+        dataAccess.clearUsers();
     }
 }
