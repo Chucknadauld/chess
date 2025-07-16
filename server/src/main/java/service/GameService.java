@@ -6,7 +6,11 @@ import dataaccess.DataAccessException;
 import model.AuthData;
 import model.GameData;
 import service.requests.CreateGameRequest;
+import service.requests.ListGamesRequest;
 import service.results.CreateGameResult;
+import service.results.ListGamesResult;
+
+import java.util.List;
 
 public class GameService {
     private final DataAccess dataAccess;
@@ -21,12 +25,12 @@ public class GameService {
     }
 
     public CreateGameResult createGame(CreateGameRequest request) throws DataAccessException {
-        // Validate gameName first (bad request validation)
+        // Validate gameName
         if (request.gameName() == null || request.gameName().isBlank()) {
             throw new BadRequestException("Missing game name");
         }
 
-        // Check authentication (follows sequence diagram: Service -> DataAccess: getAuth(authToken))
+        // Check authentication
         AuthData authData = dataAccess.getAuth(request.authToken());
         if (authData == null) {
             throw new UnauthorizedException("Invalid auth token");
@@ -37,11 +41,25 @@ public class GameService {
         ChessGame chessGame = new ChessGame();
         GameData gameData = new GameData(gameID, null, null, request.gameName(), chessGame);
 
-        // Store the game (Service -> DataAccess: createGame(GameData))
+        // Store the game
         dataAccess.createGame(gameData);
 
-        // Return gameID (Service -> Handler: CreateGameResult)
+        // Return gameID
         return new CreateGameResult(gameID);
+    }
+
+    public ListGamesResult listGames(ListGamesRequest request) throws DataAccessException {
+        // Validate authentication
+        AuthData authData = dataAccess.getAuth(request.authToken());
+        if (authData == null) {
+            throw new UnauthorizedException("Invalid auth token");
+        }
+
+        // Get the games
+        List<GameData> games = dataAccess.listGames();
+
+        // Return games (List<GameData>)
+        return new ListGamesResult(games);
     }
 
     private int generateGameID() {

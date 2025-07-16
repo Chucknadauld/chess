@@ -18,6 +18,7 @@ public class Server {
         post("/session", new LoginHandler(memoryDataAccess));
         delete("/session", new LogoutHandler(memoryDataAccess));
         post("/game", new CreateGameHandler(memoryDataAccess));
+        get("/game", new ListGamesHandler(memoryDataAccess));
 
         Spark.exception(Exception.class, (exception, request, response) -> {
             response.status(500);

@@ -2,8 +2,10 @@ package service;
 
 import dataaccess.MemoryDataAccess;
 import service.requests.CreateGameRequest;
+import service.requests.ListGamesRequest;
 import service.requests.RegisterRequest;
 import service.results.CreateGameResult;
+import service.results.ListGamesResult;
 import service.results.RegisterResult;
 import dataaccess.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,5 +114,69 @@ public class GameServiceTest {
         assertEquals(1, result1.gameID());
         assertEquals(2, result2.gameID());
         assertEquals(3, result3.gameID());
+    }
+
+    @Test
+    public void listGamesPositiveTest() throws DataAccessException {
+        MemoryDataAccess dataAccess = new MemoryDataAccess();
+        GameService gameService = new GameService(dataAccess);
+        UserService userService = new UserService(dataAccess);
+
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        RegisterResult registerResult = userService.register(registerRequest);
+        String authToken = registerResult.authToken();
+
+        CreateGameRequest createGameRequest1 = new CreateGameRequest(authToken, "Chess Game 1");
+        CreateGameRequest createGameRequest2 = new CreateGameRequest(authToken, "Chess Game 2");
+        gameService.createGame(createGameRequest1);
+        gameService.createGame(createGameRequest2);
+
+        ListGamesRequest listGamesRequest = new ListGamesRequest(authToken);
+        ListGamesResult result = gameService.listGames(listGamesRequest);
+
+        assertNotNull(result.games());
+        assertEquals(2, result.games().size());
+        assertEquals("Chess Game 1", result.games().get(0).gameName());
+        assertEquals("Chess Game 2", result.games().get(1).gameName());
+    }
+
+    @Test
+    public void listGamesInvalidAuthTokenTest() throws DataAccessException {
+        GameService service = new GameService(new MemoryDataAccess());
+
+        ListGamesRequest listGamesRequest = new ListGamesRequest("invalid-token");
+
+        assertThrows(UnauthorizedException.class, () -> {
+            service.listGames(listGamesRequest);
+        });
+    }
+
+    @Test
+    public void listGamesEmptyListTest() throws DataAccessException {
+        MemoryDataAccess dataAccess = new MemoryDataAccess();
+        GameService gameService = new GameService(dataAccess);
+        UserService userService = new UserService(dataAccess);
+
+        RegisterRequest registerRequest = new RegisterRequest("testuser", "testpass", "test@email.com");
+        RegisterResult registerResult = userService.register(registerRequest);
+        String authToken = registerResult.authToken();
+
+        ListGamesRequest listGamesRequest = new ListGamesRequest(authToken);
+        ListGamesResult result = gameService.listGames(listGamesRequest);
+
+        assertNotNull(result.games());
+        assertEquals(0, result.games().size());
+        assertTrue(result.games().isEmpty());
+    }
+
+    @Test
+    public void listGamesNullAuthTokenTest() throws DataAccessException {
+        GameService service = new GameService(new MemoryDataAccess());
+
+        ListGamesRequest listGamesRequest = new ListGamesRequest(null);
+
+        assertThrows(UnauthorizedException.class, () -> {
+            service.listGames(listGamesRequest);
+        });
     }
 }
