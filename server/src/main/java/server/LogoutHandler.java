@@ -24,10 +24,8 @@ public class LogoutHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            // Get authToken
             String authToken = request.headers("authorization");
             
-            // Validate it
             if (authToken == null || authToken.isBlank()) {
                 response.status(401);
                 return gson.toJson(Map.of("message", "Error: unauthorized"));

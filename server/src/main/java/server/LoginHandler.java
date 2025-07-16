@@ -26,7 +26,6 @@ public class LoginHandler implements Route {
         try {
             LoginRequest loginRequest = gson.fromJson(request.body(), LoginRequest.class);
 
-            // Parse and validate request
             String username = loginRequest.username();
             String password = loginRequest.password();
             if (username == null || username.isBlank() ||
@@ -35,7 +34,6 @@ public class LoginHandler implements Route {
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
 
-            // Call the service layer
             UserService service = new UserService(dataAccess);
             LoginResult result = service.login(loginRequest);
 

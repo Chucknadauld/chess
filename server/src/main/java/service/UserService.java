@@ -20,19 +20,15 @@ public class UserService {
     }
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        // Check if username exists
         UserData existingUser = dataAccess.getUser(request.username());
         if (existingUser != null) {
             throw new AlreadyTakenException("Username is already taken");
         }
 
-
-        // Create new UserData and AuthData
         UserData userData = new UserData(request.username(), request.password(), request.email());
         String token = UUID.randomUUID().toString();
         AuthData authData = new AuthData(token, request.username());
 
-        // Store in memory
         dataAccess.createUser(userData);
         dataAccess.createAuth(authData);
 
@@ -40,14 +36,12 @@ public class UserService {
     }
 
     public LoginResult login(LoginRequest request) throws DataAccessException {
-        // Find user
         UserData user = dataAccess.getUser(request.username());
 
         if (user == null || !user.password().equals(request.password())) {
             throw new UnauthorizedException("Invalid credentials");
         }
 
-        // Generate token and save it
         String token = UUID.randomUUID().toString();
         AuthData auth = new AuthData(token, user.username());
         dataAccess.createAuth(auth);
@@ -56,13 +50,11 @@ public class UserService {
     }
 
     public LogoutResult logout(LogoutRequest request) throws DataAccessException {
-        // Check if auth token exists
         AuthData authData = dataAccess.getAuth(request.authToken());
         if (authData == null) {
             throw new UnauthorizedException("Invalid auth token");
         }
 
-        // Delete the auth token
         dataAccess.deleteAuth(request.authToken());
 
         return new LogoutResult();

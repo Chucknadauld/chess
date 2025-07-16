@@ -25,19 +25,15 @@ public class ListGamesHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            // Get authToken from header
             String authToken = request.headers("authorization");
 
-            // Call the service
             GameService service = new GameService(dataAccess);
             ListGamesRequest listGamesRequest = new ListGamesRequest(authToken);
             ListGamesResult result = service.listGames(listGamesRequest);
 
-            // Return ListGamesResult
             response.status(200);
             return gson.toJson(result);
 
-        // Catch exceptions
         } catch (UnauthorizedException e) {
             response.status(401);
             return gson.toJson(Map.of("message", "Error: unauthorized"));

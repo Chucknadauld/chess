@@ -23,7 +23,7 @@ public class ClearHandler implements Route {
         try {
             service.clearApplication();
             response.status(200);
-            return new Gson().toJson(new HashMap<>()); // return {}
+            return new Gson().toJson(new HashMap<>());
         } catch (DataAccessException e) {
             response.status(500);
             return new Gson().toJson(

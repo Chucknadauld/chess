@@ -26,7 +26,6 @@ public class JoinGameHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            // Get auth token from header
             String authToken = request.headers("authorization");
 
             String playerColor;
@@ -39,8 +38,7 @@ public class JoinGameHandler implements Route {
                 response.status(400);
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
-
-            // Call the service
+        
             GameService service = new GameService(dataAccess);
             JoinGameRequest joinGameRequest = new JoinGameRequest(authToken, playerColor, gameID);
             JoinGameResult result = service.joinGame(joinGameRequest);

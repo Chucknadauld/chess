@@ -25,14 +25,11 @@ public class CreateGameHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            // Get authToken from header
             String authToken = request.headers("authorization");
-            
-            // Get gameName from body
+
             Map<String, String> body = gson.fromJson(request.body(), Map.class);
             String gameName = body != null ? body.get("gameName") : null;
 
-            // Call the service
             GameService service = new GameService(dataAccess);
             CreateGameRequest createGameRequest = new CreateGameRequest(authToken, gameName);
             CreateGameResult result = service.createGame(createGameRequest);

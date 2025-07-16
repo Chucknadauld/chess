@@ -25,10 +25,8 @@ public class RegisterHandler implements Route {
     @Override
     public Object handle(Request request, Response response) {
         try {
-            // Parse JSON into RegisterRequest
             RegisterRequest registerRequest = gson.fromJson(request.body(), RegisterRequest.class);
 
-            // Validate input
             if (registerRequest.username() == null || registerRequest.username().isBlank() ||
                     registerRequest.password() == null || registerRequest.password().isBlank() ||
                     registerRequest.email() == null || registerRequest.email().isBlank()) {
@@ -36,7 +34,6 @@ public class RegisterHandler implements Route {
                 return gson.toJson(Map.of("message", "Error: bad request"));
             }
 
-            // Call the service
             UserService service = new UserService(dataAccess);
             RegisterResult result = service.register(registerRequest);
 
