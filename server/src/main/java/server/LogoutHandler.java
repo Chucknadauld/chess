@@ -6,7 +6,6 @@ import spark.Response;
 import spark.Route;
 import service.UserService;
 import service.requests.LogoutRequest;
-import service.results.LogoutResult;
 import service.UnauthorizedException;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
@@ -33,7 +32,7 @@ public class LogoutHandler implements Route {
 
             UserService service = new UserService(dataAccess);
             LogoutRequest logoutRequest = new LogoutRequest(authToken);
-            LogoutResult result = service.logout(logoutRequest);
+            service.logout(logoutRequest);
 
             response.status(200);
             return gson.toJson(Map.of());

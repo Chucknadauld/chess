@@ -36,7 +36,7 @@ public class GameService {
             throw new UnauthorizedException("Invalid auth token");
         }
 
-        int gameID = generateGameID();
+        int gameID = nextGameID++;
         ChessGame chessGame = new ChessGame();
         GameData gameData = new GameData(gameID, null, null, request.gameName(), chessGame);
 
@@ -99,9 +99,5 @@ public class GameService {
         }
 
         return new JoinGameResult();
-    }
-
-    private int generateGameID() {
-        return nextGameID++;
     }
 }

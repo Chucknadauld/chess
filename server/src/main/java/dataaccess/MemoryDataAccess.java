@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import chess.ChessGame;
 import model.GameData;
 import model.UserData;
 import model.AuthData;

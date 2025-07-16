@@ -3,7 +3,6 @@ package server;
 import com.google.gson.Gson;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import service.BadRequestException;
 import service.GameService;
 import service.UnauthorizedException;
 import service.requests.ListGamesRequest;
