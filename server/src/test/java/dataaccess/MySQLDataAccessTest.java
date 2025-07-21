@@ -127,7 +127,7 @@ public class MySQLDataAccessTest {
     @Test
     public void createGamePositive() throws DataAccessException {
         var chessGame = new ChessGame();
-        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        var game = new GameData(1, null, null, "testgame", chessGame);
         dataAccess.createGame(game);
         
         var gamesList = dataAccess.listGames();
@@ -147,7 +147,7 @@ public class MySQLDataAccessTest {
     @Test
     public void getGamePositive() throws DataAccessException {
         var chessGame = new ChessGame();
-        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        var game = new GameData(1, null, null, "testgame", chessGame);
         dataAccess.createGame(game);
         
         var gamesList = dataAccess.listGames();
@@ -168,11 +168,16 @@ public class MySQLDataAccessTest {
     @Test
     public void updateGamePositive() throws DataAccessException {
         var chessGame = new ChessGame();
-        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        var game = new GameData(1, null, null, "testgame", chessGame);
         dataAccess.createGame(game);
         
         var gamesList = dataAccess.listGames();
         var originalGame = gamesList.get(0);
+        
+        var user1 = new UserData("newwhite", "password", "white@test.com");
+        var user2 = new UserData("newblack", "password", "black@test.com");
+        dataAccess.createUser(user1);
+        dataAccess.createUser(user2);
         
         var updatedGame = new GameData(originalGame.gameID(), "newwhite", "newblack", "updatedgame", chessGame);
         dataAccess.updateGame(updatedGame);
@@ -186,8 +191,8 @@ public class MySQLDataAccessTest {
     public void listGamesPositive() throws DataAccessException {
         var chessGame1 = new ChessGame();
         var chessGame2 = new ChessGame();
-        var game1 = new GameData(1, "white1", "black1", "game1", chessGame1);
-        var game2 = new GameData(2, "white2", "black2", "game2", chessGame2);
+        var game1 = new GameData(1, null, null, "game1", chessGame1);
+        var game2 = new GameData(2, null, null, "game2", chessGame2);
         
         dataAccess.createGame(game1);
         dataAccess.createGame(game2);
