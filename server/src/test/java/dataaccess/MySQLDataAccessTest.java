@@ -2,6 +2,8 @@ package dataaccess;
 
 import model.UserData;
 import model.AuthData;
+import model.GameData;
+import chess.ChessGame;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -120,5 +122,83 @@ public class MySQLDataAccessTest {
         
         var retrievedAuth = dataAccess.getAuth("token123");
         assertNull(retrievedAuth);
+    }
+
+    @Test
+    public void createGamePositive() throws DataAccessException {
+        var chessGame = new ChessGame();
+        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        dataAccess.createGame(game);
+        
+        var gamesList = dataAccess.listGames();
+        assertFalse(gamesList.isEmpty());
+        assertEquals("testgame", gamesList.get(0).gameName());
+    }
+
+    @Test
+    public void createGameNegative() throws DataAccessException {
+        var game = new GameData(1, null, null, null, null);
+        
+        assertThrows(DataAccessException.class, () -> {
+            dataAccess.createGame(game);
+        });
+    }
+
+    @Test
+    public void getGamePositive() throws DataAccessException {
+        var chessGame = new ChessGame();
+        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        dataAccess.createGame(game);
+        
+        var gamesList = dataAccess.listGames();
+        var gameID = gamesList.get(0).gameID();
+        
+        var retrievedGame = dataAccess.getGame(gameID);
+        assertNotNull(retrievedGame);
+        assertEquals("testgame", retrievedGame.gameName());
+        assertNotNull(retrievedGame.game());
+    }
+
+    @Test
+    public void getGameNegative() throws DataAccessException {
+        var retrievedGame = dataAccess.getGame(999);
+        assertNull(retrievedGame);
+    }
+
+    @Test
+    public void updateGamePositive() throws DataAccessException {
+        var chessGame = new ChessGame();
+        var game = new GameData(1, "white", "black", "testgame", chessGame);
+        dataAccess.createGame(game);
+        
+        var gamesList = dataAccess.listGames();
+        var originalGame = gamesList.get(0);
+        
+        var updatedGame = new GameData(originalGame.gameID(), "newwhite", "newblack", "updatedgame", chessGame);
+        dataAccess.updateGame(updatedGame);
+        
+        var retrievedGame = dataAccess.getGame(originalGame.gameID());
+        assertEquals("updatedgame", retrievedGame.gameName());
+        assertEquals("newwhite", retrievedGame.whiteUsername());
+    }
+
+    @Test
+    public void listGamesPositive() throws DataAccessException {
+        var chessGame1 = new ChessGame();
+        var chessGame2 = new ChessGame();
+        var game1 = new GameData(1, "white1", "black1", "game1", chessGame1);
+        var game2 = new GameData(2, "white2", "black2", "game2", chessGame2);
+        
+        dataAccess.createGame(game1);
+        dataAccess.createGame(game2);
+        
+        var gamesList = dataAccess.listGames();
+        assertEquals(2, gamesList.size());
+    }
+
+    @Test
+    public void listGamesEmpty() throws DataAccessException {
+        var gamesList = dataAccess.listGames();
+        assertTrue(gamesList.isEmpty());
     }
 } 

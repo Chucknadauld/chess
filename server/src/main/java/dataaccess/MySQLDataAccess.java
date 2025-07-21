@@ -4,9 +4,13 @@ import model.GameData;
 import model.UserData;
 import model.AuthData;
 import java.util.List;
+import java.util.ArrayList;
 import java.sql.SQLException;
+import com.google.gson.Gson;
 
 public class MySQLDataAccess implements DataAccess {
+
+    private final Gson gson = new Gson();
 
     public MySQLDataAccess() throws DataAccessException {
         configureDatabase();
@@ -164,23 +168,82 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void createGame(GameData game) throws DataAccessException {
-        // TODO: Implement
+        var gameJson = gson.toJson(game.game());
+        var insertGameSQL = "INSERT INTO games (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(insertGameSQL)) {
+            preparedStatement.setString(1, game.whiteUsername());
+            preparedStatement.setString(2, game.blackUsername());
+            preparedStatement.setString(3, game.gameName());
+            preparedStatement.setString(4, gameJson);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error inserting game", ex);
+        }
     }
 
     @Override
     public List<GameData> listGames() throws DataAccessException {
-        // TODO: Implement
-        return null;
+        var gamesList = new ArrayList<GameData>();
+        var selectAllGamesSQL = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM games";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(selectAllGamesSQL)) {
+            var resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                var gameJson = resultSet.getString("game");
+                var chessGame = gson.fromJson(gameJson, chess.ChessGame.class);
+                gamesList.add(new GameData(
+                    resultSet.getInt("gameID"),
+                    resultSet.getString("whiteUsername"),
+                    resultSet.getString("blackUsername"),
+                    resultSet.getString("gameName"),
+                    chessGame
+                ));
+            }
+            return gamesList;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error listing games", ex);
+        }
     }
 
     @Override
     public GameData getGame(int gameID) throws DataAccessException {
-        // TODO: Implement
-        return null;
+        var selectGameSQL = "SELECT gameID, whiteUsername, blackUsername, gameName, game FROM games WHERE gameID = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(selectGameSQL)) {
+            preparedStatement.setInt(1, gameID);
+            var resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                var gameJson = resultSet.getString("game");
+                var chessGame = gson.fromJson(gameJson, chess.ChessGame.class);
+                return new GameData(
+                    resultSet.getInt("gameID"),
+                    resultSet.getString("whiteUsername"),
+                    resultSet.getString("blackUsername"),
+                    resultSet.getString("gameName"),
+                    chessGame
+                );
+            }
+            return null;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error retrieving game", ex);
+        }
     }
 
     @Override
     public void updateGame(GameData updatedGame) throws DataAccessException {
-        // TODO: Implement
+        var gameJson = gson.toJson(updatedGame.game());
+        var updateGameSQL = "UPDATE games SET whiteUsername = ?, blackUsername = ?, gameName = ?, game = ? WHERE gameID = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(updateGameSQL)) {
+            preparedStatement.setString(1, updatedGame.whiteUsername());
+            preparedStatement.setString(2, updatedGame.blackUsername());
+            preparedStatement.setString(3, updatedGame.gameName());
+            preparedStatement.setString(4, gameJson);
+            preparedStatement.setInt(5, updatedGame.gameID());
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error updating game", ex);
+        }
     }
 } 
