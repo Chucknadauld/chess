@@ -1,6 +1,7 @@
 package dataaccess;
 
 import model.UserData;
+import model.AuthData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,5 +64,61 @@ public class MySQLDataAccessTest {
         
         var retrievedUser = dataAccess.getUser("testuser");
         assertNull(retrievedUser);
+    }
+
+    @Test
+    public void createAuthPositive() throws DataAccessException {
+        var user = new UserData("testuser", "password", "test@example.com");
+        dataAccess.createUser(user);
+        
+        var auth = new AuthData("token123", "testuser");
+        dataAccess.createAuth(auth);
+        
+        var retrievedAuth = dataAccess.getAuth("token123");
+        assertNotNull(retrievedAuth);
+        assertEquals("token123", retrievedAuth.authToken());
+        assertEquals("testuser", retrievedAuth.username());
+    }
+
+    @Test
+    public void createAuthNegative() throws DataAccessException {
+        var auth = new AuthData("token123", "nonexistent");
+        
+        assertThrows(DataAccessException.class, () -> {
+            dataAccess.createAuth(auth);
+        });
+    }
+
+    @Test
+    public void getAuthPositive() throws DataAccessException {
+        var user = new UserData("testuser", "password", "test@example.com");
+        dataAccess.createUser(user);
+        
+        var auth = new AuthData("token123", "testuser");
+        dataAccess.createAuth(auth);
+        
+        var retrievedAuth = dataAccess.getAuth("token123");
+        assertNotNull(retrievedAuth);
+        assertEquals("testuser", retrievedAuth.username());
+    }
+
+    @Test
+    public void getAuthNegative() throws DataAccessException {
+        var retrievedAuth = dataAccess.getAuth("nonexistent");
+        assertNull(retrievedAuth);
+    }
+
+    @Test
+    public void deleteAuthPositive() throws DataAccessException {
+        var user = new UserData("testuser", "password", "test@example.com");
+        dataAccess.createUser(user);
+        
+        var auth = new AuthData("token123", "testuser");
+        dataAccess.createAuth(auth);
+        
+        dataAccess.deleteAuth("token123");
+        
+        var retrievedAuth = dataAccess.getAuth("token123");
+        assertNull(retrievedAuth);
     }
 } 

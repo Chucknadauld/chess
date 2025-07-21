@@ -60,10 +60,16 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void clear() throws DataAccessException {
-        var statement = "DELETE FROM games; DELETE FROM auth; DELETE FROM users";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.executeUpdate();
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement("DELETE FROM games")) {
+                ps.executeUpdate();
+            }
+            try (var ps = conn.prepareStatement("DELETE FROM auth")) {
+                ps.executeUpdate();
+            }
+            try (var ps = conn.prepareStatement("DELETE FROM users")) {
+                ps.executeUpdate();
+            }
         } catch (SQLException ex) {
             throw new DataAccessException("Error clearing database", ex);
         }
@@ -117,18 +123,43 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void createAuth(AuthData authData) throws DataAccessException {
-        // TODO: Implement
+        var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.setString(1, authData.authToken());
+            ps.setString(2, authData.username());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error inserting auth", ex);
+        }
     }
 
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
-        // TODO: Implement
-        return null;
+        var statement = "SELECT authToken, username FROM auth WHERE authToken = ?";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.setString(1, authToken);
+            var rs = ps.executeQuery();
+            if (rs.next()) {
+                return new AuthData(rs.getString("authToken"), rs.getString("username"));
+            }
+            return null;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error retrieving auth", ex);
+        }
     }
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-        // TODO: Implement
+        var statement = "DELETE FROM auth WHERE authToken = ?";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.setString(1, authToken);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error deleting auth", ex);
+        }
     }
 
     @Override
