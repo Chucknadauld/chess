@@ -21,7 +21,7 @@ public class MySQLDataAccess implements DataAccess {
         }
     }
 
-    private void createTables(java.sql.Connection conn) throws SQLException {
+    private void createTables(java.sql.Connection connection) throws SQLException {
         var createUsersTable = """
             CREATE TABLE IF NOT EXISTS users (
                 username VARCHAR(255) PRIMARY KEY,
@@ -47,28 +47,28 @@ public class MySQLDataAccess implements DataAccess {
                 FOREIGN KEY (blackUsername) REFERENCES users(username) ON DELETE SET NULL
             )""";
 
-        try (var stmt = conn.prepareStatement(createUsersTable)) {
-            stmt.executeUpdate();
+        try (var statement = connection.prepareStatement(createUsersTable)) {
+            statement.executeUpdate();
         }
-        try (var stmt = conn.prepareStatement(createAuthTable)) {
-            stmt.executeUpdate();
+        try (var statement = connection.prepareStatement(createAuthTable)) {
+            statement.executeUpdate();
         }
-        try (var stmt = conn.prepareStatement(createGamesTable)) {
-            stmt.executeUpdate();
+        try (var statement = connection.prepareStatement(createGamesTable)) {
+            statement.executeUpdate();
         }
     }
 
     @Override
     public void clear() throws DataAccessException {
-        try (var conn = DatabaseManager.getConnection()) {
-            try (var ps = conn.prepareStatement("DELETE FROM games")) {
-                ps.executeUpdate();
+        try (var connection = DatabaseManager.getConnection()) {
+            try (var deleteGamesStatement = connection.prepareStatement("DELETE FROM games")) {
+                deleteGamesStatement.executeUpdate();
             }
-            try (var ps = conn.prepareStatement("DELETE FROM auth")) {
-                ps.executeUpdate();
+            try (var deleteAuthStatement = connection.prepareStatement("DELETE FROM auth")) {
+                deleteAuthStatement.executeUpdate();
             }
-            try (var ps = conn.prepareStatement("DELETE FROM users")) {
-                ps.executeUpdate();
+            try (var deleteUsersStatement = connection.prepareStatement("DELETE FROM users")) {
+                deleteUsersStatement.executeUpdate();
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Error clearing database", ex);
@@ -92,13 +92,13 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
-        var statement = "SELECT username, password, email FROM users WHERE username = ?";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.setString(1, username);
-            var rs = ps.executeQuery();
-            if (rs.next()) {
-                return new UserData(rs.getString("username"), rs.getString("password"), rs.getString("email"));
+        var selectUserSQL = "SELECT username, password, email FROM users WHERE username = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(selectUserSQL)) {
+            preparedStatement.setString(1, username);
+            var resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return new UserData(resultSet.getString("username"), resultSet.getString("password"), resultSet.getString("email"));
             }
             return null;
         } catch (SQLException ex) {
@@ -109,13 +109,13 @@ public class MySQLDataAccess implements DataAccess {
     @Override
     public void createUser(UserData user) throws DataAccessException {
         var hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw(user.password(), org.mindrot.jbcrypt.BCrypt.gensalt());
-        var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.setString(1, user.username());
-            ps.setString(2, hashedPassword);
-            ps.setString(3, user.email());
-            ps.executeUpdate();
+        var insertUserSQL = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(insertUserSQL)) {
+            preparedStatement.setString(1, user.username());
+            preparedStatement.setString(2, hashedPassword);
+            preparedStatement.setString(3, user.email());
+            preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("Error inserting user", ex);
         }
@@ -123,12 +123,12 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void createAuth(AuthData authData) throws DataAccessException {
-        var statement = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.setString(1, authData.authToken());
-            ps.setString(2, authData.username());
-            ps.executeUpdate();
+        var insertAuthSQL = "INSERT INTO auth (authToken, username) VALUES (?, ?)";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(insertAuthSQL)) {
+            preparedStatement.setString(1, authData.authToken());
+            preparedStatement.setString(2, authData.username());
+            preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("Error inserting auth", ex);
         }
@@ -136,13 +136,13 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public AuthData getAuth(String authToken) throws DataAccessException {
-        var statement = "SELECT authToken, username FROM auth WHERE authToken = ?";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.setString(1, authToken);
-            var rs = ps.executeQuery();
-            if (rs.next()) {
-                return new AuthData(rs.getString("authToken"), rs.getString("username"));
+        var selectAuthSQL = "SELECT authToken, username FROM auth WHERE authToken = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(selectAuthSQL)) {
+            preparedStatement.setString(1, authToken);
+            var resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return new AuthData(resultSet.getString("authToken"), resultSet.getString("username"));
             }
             return null;
         } catch (SQLException ex) {
@@ -152,11 +152,11 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
-        var statement = "DELETE FROM auth WHERE authToken = ?";
-        try (var conn = DatabaseManager.getConnection();
-             var ps = conn.prepareStatement(statement)) {
-            ps.setString(1, authToken);
-            ps.executeUpdate();
+        var deleteAuthSQL = "DELETE FROM auth WHERE authToken = ?";
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(deleteAuthSQL)) {
+            preparedStatement.setString(1, authToken);
+            preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             throw new DataAccessException("Error deleting auth", ex);
         }
