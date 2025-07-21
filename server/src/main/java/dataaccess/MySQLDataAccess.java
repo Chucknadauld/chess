@@ -60,7 +60,13 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public void clear() throws DataAccessException {
-        // TODO: Implement
+        var statement = "DELETE FROM games; DELETE FROM auth; DELETE FROM users";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error clearing database", ex);
+        }
     }
 
     @Override
@@ -80,13 +86,33 @@ public class MySQLDataAccess implements DataAccess {
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
-        // TODO: Implement
-        return null;
+        var statement = "SELECT username, password, email FROM users WHERE username = ?";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.setString(1, username);
+            var rs = ps.executeQuery();
+            if (rs.next()) {
+                return new UserData(rs.getString("username"), rs.getString("password"), rs.getString("email"));
+            }
+            return null;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error retrieving user", ex);
+        }
     }
 
     @Override
     public void createUser(UserData user) throws DataAccessException {
-        // TODO: Implement
+        var hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw(user.password(), org.mindrot.jbcrypt.BCrypt.gensalt());
+        var statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+        try (var conn = DatabaseManager.getConnection();
+             var ps = conn.prepareStatement(statement)) {
+            ps.setString(1, user.username());
+            ps.setString(2, hashedPassword);
+            ps.setString(3, user.email());
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new DataAccessException("Error inserting user", ex);
+        }
     }
 
     @Override
