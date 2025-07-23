@@ -1,30 +1,43 @@
 package server;
 
-import dataaccess.MemoryDataAccess;
+import dataaccess.MySQLDataAccess;
+import dataaccess.DataAccessException;
 import spark.*;
 
 import static spark.Spark.*;
 
 public class Server {
-    private final MemoryDataAccess memoryDataAccess = new MemoryDataAccess();
+    private final MySQLDataAccess dataAccess;
+
+    public Server() {
+        try {
+            dataAccess = new MySQLDataAccess();
+        } catch (DataAccessException ex) {
+            throw new RuntimeException("Failed to initialize database", ex);
+        }
+    }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
 
-        delete("/db", new ClearHandler(memoryDataAccess));
-        post("/user", new RegisterHandler(memoryDataAccess));
-        post("/session", new LoginHandler(memoryDataAccess));
-        delete("/session", new LogoutHandler(memoryDataAccess));
-        post("/game", new CreateGameHandler(memoryDataAccess));
-        get("/game", new ListGamesHandler(memoryDataAccess));
-        put("/game", new JoinGameHandler(memoryDataAccess));
+        delete("/db", new ClearHandler(dataAccess));
+        post("/user", new RegisterHandler(dataAccess));
+        post("/session", new LoginHandler(dataAccess));
+        delete("/session", new LogoutHandler(dataAccess));
+        post("/game", new CreateGameHandler(dataAccess));
+        get("/game", new ListGamesHandler(dataAccess));
+        put("/game", new JoinGameHandler(dataAccess));
 
         Spark.exception(Exception.class, (exception, request, response) -> {
             response.status(500);
             response.type("application/json");
-            response.body("{\"message\": \"Error: " + exception.getMessage() + "\"}");
+            String errorMessage = "Unknown error";
+            if (exception != null && exception.getMessage() != null) {
+                errorMessage = exception.getMessage();
+            }
+            response.body("{\"message\": \"Error: " + errorMessage + "\"}");
         });
 
         Spark.awaitInitialization();

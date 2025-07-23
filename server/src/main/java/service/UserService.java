@@ -38,7 +38,18 @@ public class UserService {
     public LoginResult login(LoginRequest request) throws DataAccessException {
         UserData user = dataAccess.getUser(request.username());
 
-        if (user == null || !user.password().equals(request.password())) {
+        if (user == null || user.password() == null || request.password() == null) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        boolean passwordMatches;
+        if (user.password().startsWith("$2a$") || user.password().startsWith("$2b$")) {
+            passwordMatches = org.mindrot.jbcrypt.BCrypt.checkpw(request.password(), user.password());
+        } else {
+            passwordMatches = user.password().equals(request.password());
+        }
+
+        if (!passwordMatches) {
             throw new UnauthorizedException("Invalid credentials");
         }
 
