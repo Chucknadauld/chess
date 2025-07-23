@@ -26,11 +26,9 @@ public class ClearHandler implements Route {
             return new Gson().toJson(new HashMap<>());
         } catch (DataAccessException e) {
             response.status(500);
-            return new Gson().toJson(
-                    new HashMap<>() {{
-                        put("message", "Error: " + e.getMessage());
-                    }}
-            );
+            HashMap<String, String> responseMap = new HashMap<>();
+            responseMap.put("message", "Error: " + e.getMessage());
+            return new Gson().toJson(responseMap);
         }
     }
 }

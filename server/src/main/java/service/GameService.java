@@ -3,6 +3,7 @@ package service;
 import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import dataaccess.MySQLDataAccess;
 import model.AuthData;
 import model.GameData;
 import service.requests.CreateGameRequest;
@@ -16,7 +17,7 @@ import java.util.List;
 
 public class GameService {
     private final DataAccess dataAccess;
-    static int nextGameID = 1;
+    private static int nextGameID = 1;
 
     public GameService(DataAccess dataAccess) {
         this.dataAccess = dataAccess;
@@ -36,11 +37,18 @@ public class GameService {
             throw new UnauthorizedException("Invalid auth token");
         }
 
-        int gameID = nextGameID++;
         ChessGame chessGame = new ChessGame();
-        GameData gameData = new GameData(gameID, null, null, request.gameName(), chessGame);
-
-        dataAccess.createGame(gameData);
+        int gameID;
+        
+        if (dataAccess instanceof MySQLDataAccess) {
+            GameData gameData = new GameData(0, null, null, request.gameName(), chessGame);
+            dataAccess.createGame(gameData);
+            gameID = ((MySQLDataAccess) dataAccess).getLastGeneratedGameID();
+        } else {
+            gameID = nextGameID++;
+            GameData gameData = new GameData(gameID, null, null, request.gameName(), chessGame);
+            dataAccess.createGame(gameData);
+        }
 
         return new CreateGameResult(gameID);
     }
@@ -69,7 +77,7 @@ public class GameService {
 
         String playerColor = request.playerColor();
 
-        if (playerColor == null || (!playerColor.equals("BLACK") && !playerColor.equals("WHITE"))) {
+        if (playerColor == null || playerColor.isEmpty() || (!playerColor.equals("BLACK") && !playerColor.equals("WHITE"))) {
             throw new BadRequestException("Invalid player color");
         }
 
@@ -87,8 +95,7 @@ public class GameService {
                 gameData.gameName(), 
                 gameData.game());
             dataAccess.updateGame(updatedGameData);
-        }
-        if (playerColor.equals("BLACK")) {
+        } else if (playerColor.equals("BLACK")) {
             GameData updatedGameData = new GameData(
                 request.gameID(), 
                 gameData.whiteUsername(), 

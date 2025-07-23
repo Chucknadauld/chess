@@ -125,6 +125,13 @@ public class MySQLDataAccessTest {
     }
 
     @Test
+    public void deleteAuthNegative() throws DataAccessException {
+        assertDoesNotThrow(() -> {
+            dataAccess.deleteAuth("nonexistent");
+        });
+    }
+
+    @Test
     public void createGamePositive() throws DataAccessException {
         var chessGame = new ChessGame();
         var game = new GameData(1, null, null, "testgame", chessGame);
@@ -205,5 +212,52 @@ public class MySQLDataAccessTest {
     public void listGamesEmpty() throws DataAccessException {
         var gamesList = dataAccess.listGames();
         assertTrue(gamesList.isEmpty());
+    }
+
+    @Test
+    public void updateGameNegative() throws DataAccessException {
+        var chessGame = new ChessGame();
+        var game = new GameData(999, null, null, "testgame", chessGame);
+        
+        assertDoesNotThrow(() -> {
+            dataAccess.updateGame(game);
+        });
+    }
+
+    @Test
+    public void clearGamesPositive() throws DataAccessException {
+        var chessGame = new ChessGame();
+        var game = new GameData(1, null, null, "testgame", chessGame);
+        dataAccess.createGame(game);
+        
+        dataAccess.clearGames();
+        
+        var gamesList = dataAccess.listGames();
+        assertTrue(gamesList.isEmpty());
+    }
+
+    @Test
+    public void clearAuthsPositive() throws DataAccessException {
+        var user = new UserData("testuser", "password", "test@example.com");
+        dataAccess.createUser(user);
+        
+        var auth = new AuthData("token123", "testuser");
+        dataAccess.createAuth(auth);
+        
+        dataAccess.clearAuths();
+        
+        var retrievedAuth = dataAccess.getAuth("token123");
+        assertNull(retrievedAuth);
+    }
+
+    @Test
+    public void clearUsersPositive() throws DataAccessException {
+        var user = new UserData("testuser", "password", "test@example.com");
+        dataAccess.createUser(user);
+        
+        dataAccess.clearUsers();
+        
+        var retrievedUser = dataAccess.getUser("testuser");
+        assertNull(retrievedUser);
     }
 } 

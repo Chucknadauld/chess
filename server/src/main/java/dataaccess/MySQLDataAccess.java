@@ -11,6 +11,14 @@ import com.google.gson.Gson;
 public class MySQLDataAccess implements DataAccess {
 
     private final Gson gson = new Gson();
+    
+    private DataAccessException createDatabaseException(String operation, Exception cause) {
+        String message = operation;
+        if (cause != null && cause.getMessage() != null) {
+            message += ": " + cause.getMessage();
+        }
+        return new DataAccessException(message, cause);
+    }
 
     public MySQLDataAccess() throws DataAccessException {
         configureDatabase();
@@ -21,7 +29,7 @@ public class MySQLDataAccess implements DataAccess {
         try (var conn = DatabaseManager.getConnection()) {
             createTables(conn);
         } catch (SQLException ex) {
-            throw new DataAccessException("Unable to configure database", ex);
+            throw createDatabaseException("Unable to configure database", ex);
         }
     }
 
@@ -75,23 +83,38 @@ public class MySQLDataAccess implements DataAccess {
                 deleteUsersStatement.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new DataAccessException("Error clearing database", ex);
+            throw createDatabaseException("Error clearing database", ex);
         }
     }
 
     @Override
     public void clearGames() throws DataAccessException {
-        // TODO: Implement
+        try (var connection = DatabaseManager.getConnection();
+             var statement = connection.prepareStatement("DELETE FROM games")) {
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            throw createDatabaseException("Error clearing games", ex);
+        }
     }
 
     @Override
     public void clearAuths() throws DataAccessException {
-        // TODO: Implement
+        try (var connection = DatabaseManager.getConnection();
+             var statement = connection.prepareStatement("DELETE FROM auth")) {
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            throw createDatabaseException("Error clearing auth", ex);
+        }
     }
 
     @Override
     public void clearUsers() throws DataAccessException {
-        // TODO: Implement
+        try (var connection = DatabaseManager.getConnection();
+             var statement = connection.prepareStatement("DELETE FROM users")) {
+            statement.executeUpdate();
+        } catch (SQLException ex) {
+            throw createDatabaseException("Error clearing users", ex);
+        }
     }
 
     @Override
@@ -106,7 +129,7 @@ public class MySQLDataAccess implements DataAccess {
             }
             return null;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error retrieving user", ex);
+            throw createDatabaseException("Error retrieving user", ex);
         }
     }
 
@@ -121,7 +144,7 @@ public class MySQLDataAccess implements DataAccess {
             preparedStatement.setString(3, user.email());
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new DataAccessException("Error inserting user", ex);
+            throw createDatabaseException("Error inserting user", ex);
         }
     }
 
@@ -134,7 +157,7 @@ public class MySQLDataAccess implements DataAccess {
             preparedStatement.setString(2, authData.username());
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new DataAccessException("Error inserting auth", ex);
+            throw createDatabaseException("Error inserting auth", ex);
         }
     }
 
@@ -150,7 +173,7 @@ public class MySQLDataAccess implements DataAccess {
             }
             return null;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error retrieving auth", ex);
+            throw createDatabaseException("Error retrieving auth", ex);
         }
     }
 
@@ -162,7 +185,7 @@ public class MySQLDataAccess implements DataAccess {
             preparedStatement.setString(1, authToken);
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new DataAccessException("Error deleting auth", ex);
+            throw createDatabaseException("Error deleting auth", ex);
         }
     }
 
@@ -171,15 +194,27 @@ public class MySQLDataAccess implements DataAccess {
         var gameJson = gson.toJson(game.game());
         var insertGameSQL = "INSERT INTO games (whiteUsername, blackUsername, gameName, game) VALUES (?, ?, ?, ?)";
         try (var connection = DatabaseManager.getConnection();
-             var preparedStatement = connection.prepareStatement(insertGameSQL)) {
+             var preparedStatement = connection.prepareStatement(insertGameSQL, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, game.whiteUsername());
             preparedStatement.setString(2, game.blackUsername());
             preparedStatement.setString(3, game.gameName());
             preparedStatement.setString(4, gameJson);
             preparedStatement.executeUpdate();
+            
+            try (var generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    this.lastGeneratedGameID = generatedKeys.getInt(1);
+                }
+            }
         } catch (SQLException ex) {
-            throw new DataAccessException("Error inserting game", ex);
+            throw createDatabaseException("Error inserting game", ex);
         }
+    }
+
+    private int lastGeneratedGameID = 0;
+    
+    public int getLastGeneratedGameID() {
+        return lastGeneratedGameID;
     }
 
     @Override
@@ -202,7 +237,7 @@ public class MySQLDataAccess implements DataAccess {
             }
             return gamesList;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error listing games", ex);
+            throw createDatabaseException("Error listing games", ex);
         }
     }
 
@@ -226,7 +261,7 @@ public class MySQLDataAccess implements DataAccess {
             }
             return null;
         } catch (SQLException ex) {
-            throw new DataAccessException("Error retrieving game", ex);
+            throw createDatabaseException("Error retrieving game", ex);
         }
     }
 
@@ -243,7 +278,7 @@ public class MySQLDataAccess implements DataAccess {
             preparedStatement.setInt(5, updatedGame.gameID());
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new DataAccessException("Error updating game", ex);
+            throw createDatabaseException("Error updating game", ex);
         }
     }
 } 
