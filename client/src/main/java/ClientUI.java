@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import client.ServerFacade;
 import ui.EscapeSequences;
 
 public class ClientUI {
