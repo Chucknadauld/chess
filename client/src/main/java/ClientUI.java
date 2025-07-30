@@ -1,14 +1,22 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class ClientUI {
     private final ServerFacade serverFacade;
     private final Scanner scanner;
     private String authToken;
+    private List<ServerFacade.GameData> currentGames;
+    private Integer currentGameID;
+    private String playerColor;
 
     public ClientUI(String serverUrl) {
         this.serverFacade = new ServerFacade(serverUrl);
         this.scanner = new Scanner(System.in);
         this.authToken = null;
+        this.currentGames = new ArrayList<>();
+        this.currentGameID = null;
+        this.playerColor = null;
     }
 
     public void run() {
@@ -65,19 +73,13 @@ public class ClientUI {
     private void handleRegister() {
         try {
             System.out.print("Username: ");
-            String username = scanner.nextLine();
-            if (username == null) return;
-            username = username.trim();
+            String username = scanner.nextLine().trim();
             
             System.out.print("Password: ");
-            String password = scanner.nextLine();
-            if (password == null) return;
-            password = password.trim();
+            String password = scanner.nextLine().trim();
             
             System.out.print("Email: ");
-            String email = scanner.nextLine();
-            if (email == null) return;
-            email = email.trim();
+            String email = scanner.nextLine().trim();
 
             if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
                 System.out.println("All fields are required.");
@@ -95,14 +97,10 @@ public class ClientUI {
     private void handleLogin() {
         try {
             System.out.print("Username: ");
-            String username = scanner.nextLine();
-            if (username == null) return;
-            username = username.trim();
+            String username = scanner.nextLine().trim();
             
             System.out.print("Password: ");
-            String password = scanner.nextLine();
-            if (password == null) return;
-            password = password.trim();
+            String password = scanner.nextLine().trim();
 
             if (username.isEmpty() || password.isEmpty()) {
                 System.out.println("Username and password are required.");
@@ -121,19 +119,19 @@ public class ClientUI {
         try {
             serverFacade.logout(authToken);
             authToken = null;
+            currentGames.clear();
+            currentGameID = null;
+            playerColor = null;
             System.out.println("You have been logged out.");
         } catch (Exception e) {
             System.out.println("Logout failed: " + e.getMessage());
-            authToken = null;
         }
     }
 
     private void handleCreateGame() {
         try {
             System.out.print("Game name: ");
-            String gameName = scanner.nextLine();
-            if (gameName == null) return;
-            gameName = gameName.trim();
+            String gameName = scanner.nextLine().trim();
 
             if (gameName.isEmpty()) {
                 System.out.println("Game name is required.");
@@ -150,15 +148,16 @@ public class ClientUI {
     private void handleListGames() {
         try {
             ServerFacade.ListGamesResult result = serverFacade.listGames(authToken);
+            currentGames = result.games();
             
-            if (result.games().isEmpty()) {
+            if (currentGames.isEmpty()) {
                 System.out.println("No games available.");
                 return;
             }
             
             System.out.println("Games:");
-            for (int i = 0; i < result.games().size(); i++) {
-                ServerFacade.GameData game = result.games().get(i);
+            for (int i = 0; i < currentGames.size(); i++) {
+                ServerFacade.GameData game = currentGames.get(i);
                 int gameNumber = i + 1;
                 String white = game.whiteUsername() != null ? game.whiteUsername() : "";
                 String black = game.blackUsername() != null ? game.blackUsername() : "";
@@ -169,6 +168,93 @@ public class ClientUI {
         } catch (Exception e) {
             System.out.println("List games failed: " + e.getMessage());
         }
+    }
+
+    private void handlePlayGame() {
+        try {
+            if (currentGames.isEmpty()) {
+                System.out.println("No games available. Use 'list' to see games.");
+                return;
+            }
+
+            System.out.print("Game number: ");
+            String input = scanner.nextLine().trim();
+
+            int gameNumber;
+            try {
+                gameNumber = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid game number.");
+                return;
+            }
+
+            if (gameNumber < 1 || gameNumber > currentGames.size()) {
+                System.out.println("Game number out of range.");
+                return;
+            }
+
+            System.out.print("Color (WHITE/BLACK): ");
+            String colorInput = scanner.nextLine().trim().toUpperCase();
+
+            if (!colorInput.equals("WHITE") && !colorInput.equals("BLACK")) {
+                System.out.println("Invalid color. Must be WHITE or BLACK.");
+                return;
+            }
+
+            ServerFacade.GameData game = currentGames.get(gameNumber - 1);
+            serverFacade.joinGame(authToken, colorInput, game.gameID());
+            
+            currentGameID = game.gameID();
+            playerColor = colorInput;
+            
+            System.out.println("Joined game as " + colorInput + " player!");
+            System.out.println("Game: " + game.gameName());
+            displayBoard();
+            
+        } catch (Exception e) {
+            System.out.println("Join game failed: " + e.getMessage());
+        }
+    }
+
+    private void handleObserveGame() {
+        try {
+            if (currentGames.isEmpty()) {
+                System.out.println("No games available. Use 'list' to see games.");
+                return;
+            }
+
+            System.out.print("Game number: ");
+            String input = scanner.nextLine().trim();
+
+            int gameNumber;
+            try {
+                gameNumber = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid game number.");
+                return;
+            }
+
+            if (gameNumber < 1 || gameNumber > currentGames.size()) {
+                System.out.println("Game number out of range.");
+                return;
+            }
+
+            ServerFacade.GameData game = currentGames.get(gameNumber - 1);
+            serverFacade.joinGame(authToken, null, game.gameID());
+            
+            currentGameID = game.gameID();
+            playerColor = null;
+            
+            System.out.println("Now observing game: " + game.gameName());
+            displayBoard();
+            
+        } catch (Exception e) {
+            System.out.println("Observe game failed: " + e.getMessage());
+        }
+    }
+
+    private void displayBoard() {
+        System.out.println("Not yet implemented");
     }
 
     private void postloginMenu() {
@@ -191,8 +277,8 @@ public class ClientUI {
             case "logout", "lo" -> handleLogout();
             case "create", "c" -> handleCreateGame();
             case "list", "ls" -> handleListGames();
-            case "play", "p" -> System.out.println("Play game command not yet implemented");
-            case "observe", "o" -> System.out.println("Observe game command not yet implemented");
+            case "play", "p" -> handlePlayGame();
+            case "observe", "o" -> handleObserveGame();
             case "quit", "q", "exit" -> {
                 System.out.println("Goodbye!");
                 System.exit(0);

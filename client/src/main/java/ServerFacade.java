@@ -32,6 +32,9 @@ public class ServerFacade {
     public record ListGamesRequest(String authToken) {}
     public record GameData(int gameID, String whiteUsername, String blackUsername, String gameName) {}
     public record ListGamesResult(java.util.List<GameData> games) {}
+    
+    public record JoinGameRequest(String authToken, String playerColor, int gameID) {}
+    public record JoinGameResult() {}
 
     public RegisterResult register(String username, String password, String email) throws Exception {
         RegisterRequest request = new RegisterRequest(username, password, email);
@@ -139,6 +142,30 @@ public class ServerFacade {
                 return gson.fromJson(response.body(), ListGamesResult.class);
             } else {
                 throw new Exception("List games failed: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new Exception("Failed to connect to server: " + e.getMessage());
+        }
+    }
+
+    public JoinGameResult joinGame(String authToken, String playerColor, int gameID) throws Exception {
+        JoinGameRequest request = new JoinGameRequest(authToken, playerColor, gameID);
+        String requestBody = gson.toJson(request);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", authToken)
+                .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return new JoinGameResult();
+            } else {
+                throw new Exception("Join game failed: " + response.body());
             }
         } catch (IOException | InterruptedException e) {
             throw new Exception("Failed to connect to server: " + e.getMessage());
