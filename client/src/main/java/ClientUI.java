@@ -147,6 +147,30 @@ public class ClientUI {
         }
     }
 
+    private void handleListGames() {
+        try {
+            ServerFacade.ListGamesResult result = serverFacade.listGames(authToken);
+            
+            if (result.games().isEmpty()) {
+                System.out.println("No games available.");
+                return;
+            }
+            
+            System.out.println("Games:");
+            for (int i = 0; i < result.games().size(); i++) {
+                ServerFacade.GameData game = result.games().get(i);
+                int gameNumber = i + 1;
+                String white = game.whiteUsername() != null ? game.whiteUsername() : "";
+                String black = game.blackUsername() != null ? game.blackUsername() : "";
+                
+                System.out.println(gameNumber + ". " + game.gameName() + 
+                    " (White: " + white + ", Black: " + black + ")");
+            }
+        } catch (Exception e) {
+            System.out.println("List games failed: " + e.getMessage());
+        }
+    }
+
     private void postloginMenu() {
         System.out.print("[LOGGED_IN] >>> ");
         String input = scanner.nextLine();
@@ -166,7 +190,7 @@ public class ClientUI {
             case "help", "h" -> printPostloginHelp();
             case "logout", "lo" -> handleLogout();
             case "create", "c" -> handleCreateGame();
-            case "list", "ls" -> System.out.println("List games command not yet implemented");
+            case "list", "ls" -> handleListGames();
             case "play", "p" -> System.out.println("Play game command not yet implemented");
             case "observe", "o" -> System.out.println("Observe game command not yet implemented");
             case "quit", "q", "exit" -> {
