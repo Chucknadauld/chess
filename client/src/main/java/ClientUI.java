@@ -4,6 +4,8 @@ import java.util.Scanner;
 
 import client.ServerFacade;
 import ui.EscapeSequences;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 public class ClientUI {
     private final ServerFacade serverFacade;
@@ -12,6 +14,7 @@ public class ClientUI {
     private List<ServerFacade.GameData> currentGames;
     private Integer currentGameID;
     private String playerColor;
+    private final Gson gson;
 
     public ClientUI(String serverUrl) {
         this.serverFacade = new ServerFacade(serverUrl);
@@ -20,6 +23,7 @@ public class ClientUI {
         this.currentGames = new ArrayList<>();
         this.currentGameID = null;
         this.playerColor = null;
+        this.gson = new Gson();
     }
 
     public void run() {
@@ -93,7 +97,7 @@ public class ClientUI {
             authToken = result.authToken();
             System.out.println("Registration successful! Welcome " + result.username() + "!");
         } catch (Exception e) {
-            System.out.println("Registration failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }
 
@@ -114,7 +118,7 @@ public class ClientUI {
             authToken = result.authToken();
             System.out.println("Login successful! Welcome back " + result.username() + "!");
         } catch (Exception e) {
-            System.out.println("Login failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }
 
@@ -127,7 +131,7 @@ public class ClientUI {
             playerColor = null;
             System.out.println("You have been logged out.");
         } catch (Exception e) {
-            System.out.println("Logout failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }
 
@@ -144,7 +148,7 @@ public class ClientUI {
             ServerFacade.CreateGameResult result = serverFacade.createGame(authToken, gameName);
             System.out.println("Game created successfully!");
         } catch (Exception e) {
-            System.out.println("Create game failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }
 
@@ -169,7 +173,7 @@ public class ClientUI {
                     " (White: " + white + ", Black: " + black + ")");
             }
         } catch (Exception e) {
-            System.out.println("List games failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }
 
@@ -198,7 +202,7 @@ public class ClientUI {
             displayBoard();
     
         } catch (Exception e) {
-            System.out.println("Join game failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }    
 
@@ -216,7 +220,7 @@ public class ClientUI {
             displayBoard();
     
         } catch (Exception e) {
-            System.out.println("Observe game failed: " + e.getMessage());
+            System.out.println(parseErrorMessage(e.getMessage()));
         }
     }    
 
@@ -236,7 +240,7 @@ public class ClientUI {
         } else {
             printColumnLabels(true);
             for (int row = 0; row < 8; row++) {
-                printRow(board, row, 8 - row, true);
+                printRow(board, row, row + 1, true);
             }
             printColumnLabels(true);
         }
@@ -283,14 +287,14 @@ public class ClientUI {
     }
 
     private void printColumnLabels(boolean flipped) {
-        System.out.print("    ");
+        System.out.print("   ");
         if (flipped) {
             for (char col = 'h'; col >= 'a'; col--) {
-                System.out.print(" " + col + "  ");
+                System.out.print(" " + col + " ");
             }
         } else {
             for (char col = 'a'; col <= 'h'; col++) {
-                System.out.print(" " + col + "  ");
+                System.out.print(" " + col + " ");
             }
         }
         System.out.println();
@@ -301,7 +305,7 @@ public class ClientUI {
         
         for (int i = 0; i < 8; i++) {
             int col = flipped ? 7 - i : i;
-            boolean isLightSquare = (row + col) % 2 == 0;
+            boolean isLightSquare = (row + col) % 2 != 0;
             
             if (isLightSquare) {
                 System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
@@ -382,5 +386,27 @@ public class ClientUI {
         }
     
         return currentGames.get(gameNumber - 1);
-    }    
+    }
+
+    private String parseErrorMessage(String errorMessage) {
+        try {
+            int jsonStart = errorMessage.indexOf("{\"message\":");
+            if (jsonStart != -1) {
+                int jsonEnd = errorMessage.lastIndexOf("}") + 1;
+                if (jsonEnd > jsonStart) {
+                    String jsonPart = errorMessage.substring(jsonStart, jsonEnd);
+                    JsonObject jsonError = gson.fromJson(jsonPart, JsonObject.class);
+                    if (jsonError != null && jsonError.has("message")) {
+                        String cleanMessage = jsonError.get("message").getAsString();
+                        if (cleanMessage.startsWith("Error: ")) {
+                            cleanMessage = cleanMessage.substring(7);
+                        }
+                        return errorMessage.substring(0, jsonStart) + cleanMessage;
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return errorMessage;
+    }
 }
