@@ -119,16 +119,41 @@ public class ClientUI {
 
     private void postloginMenu() {
         System.out.print("[LOGGED_IN] >>> ");
-        String input = scanner.nextLine().trim().toLowerCase();
+        String input = scanner.nextLine();
+        
+        if (input == null) {
+            System.out.println("Goodbye!");
+            System.exit(0);
+        }
+        
+        input = input.trim().toLowerCase();
+        
+        if (input.isEmpty()) {
+            return;
+        }
         
         switch (input) {
-            case "help" -> System.out.println("Postlogin help not yet implemented");
-            case "logout" -> System.out.println("Logout command not yet implemented");
-            case "create" -> System.out.println("Create game command not yet implemented");
-            case "list" -> System.out.println("List games command not yet implemented");
-            case "play" -> System.out.println("Play game command not yet implemented");
-            case "observe" -> System.out.println("Observe game command not yet implemented");
+            case "help", "h" -> printPostloginHelp();
+            case "logout", "lo" -> System.out.println("Logout command not yet implemented");
+            case "create", "c" -> System.out.println("Create game command not yet implemented");
+            case "list", "ls" -> System.out.println("List games command not yet implemented");
+            case "play", "p" -> System.out.println("Play game command not yet implemented");
+            case "observe", "o" -> System.out.println("Observe game command not yet implemented");
+            case "quit", "q", "exit" -> {
+                System.out.println("Goodbye!");
+                System.exit(0);
+            }
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
         }
+    }
+
+    private void printPostloginHelp() {
+        System.out.println("create (c) <name> - create a new game");
+        System.out.println("list (ls) - list all games");
+        System.out.println("play (p) <id> [WHITE|BLACK] - join a game as a player");
+        System.out.println("observe (o) <id> - watch a game");
+        System.out.println("logout (lo) - sign out");
+        System.out.println("quit (q) - exit");
+        System.out.println("help (h) - see this message");
     }
 }
