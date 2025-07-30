@@ -53,10 +53,10 @@ public class ClientUI {
         }
         
         switch (input) {
-            case "help", "h" -> printPreloginHelp();
-            case "register", "r" -> handleRegister();
-            case "login", "l" -> handleLogin();
-            case "quit", "q", "exit" -> {
+            case "help" -> printPreloginHelp();
+            case "register" -> handleRegister();
+            case "login" -> handleLogin();
+            case "quit", "exit" -> {
                 System.out.println("Goodbye!");
                 System.exit(0);
             }
@@ -65,10 +65,10 @@ public class ClientUI {
     }
 
     private void printPreloginHelp() {
-        System.out.println("register (r) - to create an account");
-        System.out.println("login (l) - to play chess");
-        System.out.println("quit (q) - to exit");
-        System.out.println("help (h) - to see this message");
+        System.out.println("register - to create an account");
+        System.out.println("login - to play chess");
+        System.out.println("quit - to exit");
+        System.out.println("help - to see this message");
     }
 
     private void handleRegister() {
@@ -369,13 +369,13 @@ public class ClientUI {
         }
         
         switch (input) {
-            case "help", "h" -> printPostloginHelp();
-            case "logout", "lo" -> handleLogout();
-            case "create", "c" -> handleCreateGame();
-            case "list", "ls" -> handleListGames();
-            case "play", "p" -> handlePlayGame();
-            case "observe", "o" -> handleObserveGame();
-            case "quit", "q", "exit" -> {
+            case "help" -> printPostloginHelp();
+            case "logout" -> handleLogout();
+            case "create" -> handleCreateGame();
+            case "list" -> handleListGames();
+            case "play" -> handlePlayGame();
+            case "observe" -> handleObserveGame();
+            case "quit", "exit" -> {
                 System.out.println("Goodbye!");
                 System.exit(0);
             }
@@ -385,11 +385,11 @@ public class ClientUI {
 
     private void printPostloginHelp() {
         System.out.println("create (c) <name> - create a new game");
-        System.out.println("list (ls) - list all games");
-        System.out.println("play (p) <id> [WHITE|BLACK] - join a game as a player");
-        System.out.println("observe (o) <id> - watch a game");
-        System.out.println("logout (lo) - sign out");
-        System.out.println("quit (q) - exit");
-        System.out.println("help (h) - see this message");
+        System.out.println("list - list all games");
+        System.out.println("play <id> [WHITE|BLACK] - join a game as a player");
+        System.out.println("observe <id> - watch a game");
+        System.out.println("logout - sign out");
+        System.out.println("quit - exit");
+        System.out.println("help - see this message");
     }
 }

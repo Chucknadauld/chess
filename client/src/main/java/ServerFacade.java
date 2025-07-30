@@ -171,4 +171,22 @@ public class ServerFacade {
             throw new Exception("Failed to connect to server: " + e.getMessage());
         }
     }
+
+    public void clear() throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/db"))
+                .header("Content-Type", "application/json")
+                .DELETE()
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                throw new Exception("Clear database failed: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new Exception("Failed to connect to server: " + e.getMessage());
+        }
+    }
 }
