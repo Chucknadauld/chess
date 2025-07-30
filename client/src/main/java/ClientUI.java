@@ -117,6 +117,17 @@ public class ClientUI {
         }
     }
 
+    private void handleLogout() {
+        try {
+            serverFacade.logout(authToken);
+            authToken = null;
+            System.out.println("You have been logged out.");
+        } catch (Exception e) {
+            System.out.println("Logout failed: " + e.getMessage());
+            authToken = null;
+        }
+    }
+
     private void postloginMenu() {
         System.out.print("[LOGGED_IN] >>> ");
         String input = scanner.nextLine();
@@ -134,7 +145,7 @@ public class ClientUI {
         
         switch (input) {
             case "help", "h" -> printPostloginHelp();
-            case "logout", "lo" -> System.out.println("Logout command not yet implemented");
+            case "logout", "lo" -> handleLogout();
             case "create", "c" -> System.out.println("Create game command not yet implemented");
             case "list", "ls" -> System.out.println("List games command not yet implemented");
             case "play", "p" -> System.out.println("Play game command not yet implemented");
