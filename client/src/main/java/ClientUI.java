@@ -29,7 +29,7 @@ public class ClientUI {
         
         switch (input) {
             case "help" -> printPreloginHelp();
-            case "register" -> System.out.println("Register command not yet implemented");
+            case "register" -> handleRegister();
             case "login" -> System.out.println("Login command not yet implemented");
             case "quit" -> {
                 System.out.println("Goodbye!");
@@ -44,6 +44,30 @@ public class ClientUI {
         System.out.println("login <username> <password> - to play chess");
         System.out.println("quit - to exit");
         System.out.println("help - to see this message");
+    }
+
+    private void handleRegister() {
+        System.out.print("Username: ");
+        String username = scanner.nextLine().trim();
+        
+        System.out.print("Password: ");
+        String password = scanner.nextLine().trim();
+        
+        System.out.print("Email: ");
+        String email = scanner.nextLine().trim();
+
+        if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+            System.out.println("All fields are required.");
+            return;
+        }
+
+        try {
+            ServerFacade.RegisterResult result = serverFacade.register(username, password, email);
+            authToken = result.authToken();
+            System.out.println("Registration successful! Welcome " + result.username() + "!");
+        } catch (Exception e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        }
     }
 
     private void postloginMenu() {
