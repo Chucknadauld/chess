@@ -25,6 +25,9 @@ public class ServerFacade {
     
     public record LogoutRequest(String authToken) {}
     public record LogoutResult() {}
+    
+    public record CreateGameRequest(String authToken, String gameName) {}
+    public record CreateGameResult(int gameID) {}
 
     public RegisterResult register(String username, String password, String email) throws Exception {
         RegisterRequest request = new RegisterRequest(username, password, email);
@@ -87,6 +90,30 @@ public class ServerFacade {
                 return new LogoutResult();
             } else {
                 throw new Exception("Logout failed: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new Exception("Failed to connect to server: " + e.getMessage());
+        }
+    }
+
+    public CreateGameResult createGame(String authToken, String gameName) throws Exception {
+        CreateGameRequest request = new CreateGameRequest(authToken, gameName);
+        String requestBody = gson.toJson(request);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", authToken)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return gson.fromJson(response.body(), CreateGameResult.class);
+            } else {
+                throw new Exception("Create game failed: " + response.body());
             }
         } catch (IOException | InterruptedException e) {
             throw new Exception("Failed to connect to server: " + e.getMessage());

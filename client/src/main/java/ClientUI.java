@@ -128,6 +128,25 @@ public class ClientUI {
         }
     }
 
+    private void handleCreateGame() {
+        try {
+            System.out.print("Game name: ");
+            String gameName = scanner.nextLine();
+            if (gameName == null) return;
+            gameName = gameName.trim();
+
+            if (gameName.isEmpty()) {
+                System.out.println("Game name is required.");
+                return;
+            }
+
+            ServerFacade.CreateGameResult result = serverFacade.createGame(authToken, gameName);
+            System.out.println("Game created successfully! Game ID: " + result.gameID());
+        } catch (Exception e) {
+            System.out.println("Create game failed: " + e.getMessage());
+        }
+    }
+
     private void postloginMenu() {
         System.out.print("[LOGGED_IN] >>> ");
         String input = scanner.nextLine();
@@ -146,7 +165,7 @@ public class ClientUI {
         switch (input) {
             case "help", "h" -> printPostloginHelp();
             case "logout", "lo" -> handleLogout();
-            case "create", "c" -> System.out.println("Create game command not yet implemented");
+            case "create", "c" -> handleCreateGame();
             case "list", "ls" -> System.out.println("List games command not yet implemented");
             case "play", "p" -> System.out.println("Play game command not yet implemented");
             case "observe", "o" -> System.out.println("Observe game command not yet implemented");
