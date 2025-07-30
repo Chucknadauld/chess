@@ -175,85 +175,46 @@ public class ClientUI {
 
     private void handlePlayGame() {
         try {
-            if (currentGames.isEmpty()) {
-                System.out.println("No games available. Use 'list' to see games.");
-                return;
-            }
-
-            System.out.print("Game number: ");
-            String input = scanner.nextLine().trim();
-
-            int gameNumber;
-            try {
-                gameNumber = Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid game number.");
-                return;
-            }
-
-            if (gameNumber < 1 || gameNumber > currentGames.size()) {
-                System.out.println("Game number out of range.");
-                return;
-            }
-
+            ServerFacade.GameData game = promptUserForGame();
+            if (game == null) return;
+    
             System.out.print("Color (WHITE/BLACK): ");
             String colorInput = scanner.nextLine().trim().toUpperCase();
-
+    
             if (!colorInput.equals("WHITE") && !colorInput.equals("BLACK")) {
                 System.out.println("Invalid color. Must be WHITE or BLACK.");
                 return;
             }
-
-            ServerFacade.GameData game = currentGames.get(gameNumber - 1);
+    
             serverFacade.joinGame(authToken, colorInput, game.gameID());
-            
+    
             currentGameID = game.gameID();
             playerColor = colorInput;
-            
+    
             System.out.println("Joined game as " + colorInput + " player!");
             System.out.println("Game: " + game.gameName());
             displayBoard();
-            
+    
         } catch (Exception e) {
             System.out.println("Join game failed: " + e.getMessage());
         }
-    }
+    }    
 
     private void handleObserveGame() {
         try {
-            if (currentGames.isEmpty()) {
-                System.out.println("No games available. Use 'list' to see games.");
-                return;
-            }
-
-            System.out.print("Game number: ");
-            String input = scanner.nextLine().trim();
-
-            int gameNumber;
-            try {
-                gameNumber = Integer.parseInt(input);
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid game number.");
-                return;
-            }
-
-            if (gameNumber < 1 || gameNumber > currentGames.size()) {
-                System.out.println("Game number out of range.");
-                return;
-            }
-
-            ServerFacade.GameData game = currentGames.get(gameNumber - 1);
-            
+            ServerFacade.GameData game = promptUserForGame();
+            if (game == null) return;
+    
             currentGameID = game.gameID();
             playerColor = null;
-            
+    
             System.out.println("Now observing game: " + game.gameName());
             displayBoard();
-            
+    
         } catch (Exception e) {
             System.out.println("Observe game failed: " + e.getMessage());
         }
-    }
+    }    
 
     private void displayBoard() {
         boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
@@ -393,4 +354,29 @@ public class ClientUI {
         System.out.println("quit - exit");
         System.out.println("help - see this message");
     }
+
+    private ServerFacade.GameData promptUserForGame() {
+        if (currentGames.isEmpty()) {
+            System.out.println("No games available. Use 'list' to see games.");
+            return null;
+        }
+    
+        System.out.print("Game number: ");
+        String input = scanner.nextLine().trim();
+    
+        int gameNumber;
+        try {
+            gameNumber = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid game number.");
+            return null;
+        }
+    
+        if (gameNumber < 1 || gameNumber > currentGames.size()) {
+            System.out.println("Game number out of range.");
+            return null;
+        }
+    
+        return currentGames.get(gameNumber - 1);
+    }    
 }
