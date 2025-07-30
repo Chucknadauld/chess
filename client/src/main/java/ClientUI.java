@@ -142,7 +142,7 @@ public class ClientUI {
             }
 
             ServerFacade.CreateGameResult result = serverFacade.createGame(authToken, gameName);
-            System.out.println("Game created successfully! Game ID: " + result.gameID());
+            System.out.println("Game created successfully!");
         } catch (Exception e) {
             System.out.println("Create game failed: " + e.getMessage());
         }
@@ -243,7 +243,6 @@ public class ClientUI {
             }
 
             ServerFacade.GameData game = currentGames.get(gameNumber - 1);
-            serverFacade.joinGame(authToken, null, game.gameID());
             
             currentGameID = game.gameID();
             playerColor = null;
