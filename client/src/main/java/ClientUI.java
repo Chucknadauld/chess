@@ -28,7 +28,7 @@ public class ClientUI {
         String input = scanner.nextLine().trim().toLowerCase();
         
         switch (input) {
-            case "help" -> System.out.println("Help command not yet implemented");
+            case "help" -> printPreloginHelp();
             case "register" -> System.out.println("Register command not yet implemented");
             case "login" -> System.out.println("Login command not yet implemented");
             case "quit" -> {
@@ -37,6 +37,13 @@ public class ClientUI {
             }
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
         }
+    }
+
+    private void printPreloginHelp() {
+        System.out.println("register <username> <password> <email> - to create an account");
+        System.out.println("login <username> <password> - to play chess");
+        System.out.println("quit - to exit");
+        System.out.println("help - to see this message");
     }
 
     private void postloginMenu() {
