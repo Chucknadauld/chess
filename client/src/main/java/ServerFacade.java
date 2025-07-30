@@ -19,6 +19,9 @@ public class ServerFacade {
 
     public record RegisterRequest(String username, String password, String email) {}
     public record RegisterResult(String username, String authToken) {}
+    
+    public record LoginRequest(String username, String password) {}
+    public record LoginResult(String username, String authToken) {}
 
     public RegisterResult register(String username, String password, String email) throws Exception {
         RegisterRequest request = new RegisterRequest(username, password, email);
@@ -37,6 +40,29 @@ public class ServerFacade {
                 return gson.fromJson(response.body(), RegisterResult.class);
             } else {
                 throw new Exception("Registration failed: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new Exception("Failed to connect to server: " + e.getMessage());
+        }
+    }
+
+    public LoginResult login(String username, String password) throws Exception {
+        LoginRequest request = new LoginRequest(username, password);
+        String requestBody = gson.toJson(request);
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/session"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                return gson.fromJson(response.body(), LoginResult.class);
+            } else {
+                throw new Exception("Login failed: " + response.body());
             }
         } catch (IOException | InterruptedException e) {
             throw new Exception("Failed to connect to server: " + e.getMessage());
