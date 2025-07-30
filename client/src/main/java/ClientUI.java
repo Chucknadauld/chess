@@ -176,7 +176,9 @@ public class ClientUI {
     private void handlePlayGame() {
         try {
             ServerFacade.GameData game = promptUserForGame();
-            if (game == null) return;
+            if (game == null) {
+                return;
+            }
     
             System.out.print("Color (WHITE/BLACK): ");
             String colorInput = scanner.nextLine().trim().toUpperCase();
@@ -203,7 +205,9 @@ public class ClientUI {
     private void handleObserveGame() {
         try {
             ServerFacade.GameData game = promptUserForGame();
-            if (game == null) return;
+            if (game == null) {
+                return;
+            }
     
             currentGameID = game.gameID();
             playerColor = null;
