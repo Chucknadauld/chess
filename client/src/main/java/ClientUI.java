@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import ui.EscapeSequences;
 
 public class ClientUI {
     private final ServerFacade serverFacade;
@@ -254,7 +255,102 @@ public class ClientUI {
     }
 
     private void displayBoard() {
-        System.out.println("Not yet implemented");
+        boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
+        
+        String[][] board = createStartingBoard();
+        
+        System.out.println();
+        
+        if (whiteBottom) {
+            printColumnLabels(false);
+            for (int row = 7; row >= 0; row--) {
+                printRow(board, row, row + 1, false);
+            }
+            printColumnLabels(false);
+        } else {
+            printColumnLabels(true);
+            for (int row = 0; row < 8; row++) {
+                printRow(board, row, 8 - row, true);
+            }
+            printColumnLabels(true);
+        }
+        
+        System.out.println();
+    }
+
+    private String[][] createStartingBoard() {
+        String[][] board = new String[8][8];
+        
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                board[row][col] = EscapeSequences.EMPTY;
+            }
+        }
+        
+        board[0][0] = EscapeSequences.BLACK_ROOK;
+        board[0][1] = EscapeSequences.BLACK_KNIGHT;
+        board[0][2] = EscapeSequences.BLACK_BISHOP;
+        board[0][3] = EscapeSequences.BLACK_QUEEN;
+        board[0][4] = EscapeSequences.BLACK_KING;
+        board[0][5] = EscapeSequences.BLACK_BISHOP;
+        board[0][6] = EscapeSequences.BLACK_KNIGHT;
+        board[0][7] = EscapeSequences.BLACK_ROOK;
+        
+        for (int col = 0; col < 8; col++) {
+            board[1][col] = EscapeSequences.BLACK_PAWN;
+        }
+        
+        for (int col = 0; col < 8; col++) {
+            board[6][col] = EscapeSequences.WHITE_PAWN;
+        }
+        
+        board[7][0] = EscapeSequences.WHITE_ROOK;
+        board[7][1] = EscapeSequences.WHITE_KNIGHT;
+        board[7][2] = EscapeSequences.WHITE_BISHOP;
+        board[7][3] = EscapeSequences.WHITE_QUEEN;
+        board[7][4] = EscapeSequences.WHITE_KING;
+        board[7][5] = EscapeSequences.WHITE_BISHOP;
+        board[7][6] = EscapeSequences.WHITE_KNIGHT;
+        board[7][7] = EscapeSequences.WHITE_ROOK;
+        
+        return board;
+    }
+
+    private void printColumnLabels(boolean flipped) {
+        System.out.print("    ");
+        if (flipped) {
+            for (char col = 'h'; col >= 'a'; col--) {
+                System.out.print(" " + col + "  ");
+            }
+        } else {
+            for (char col = 'a'; col <= 'h'; col++) {
+                System.out.print(" " + col + "  ");
+            }
+        }
+        System.out.println();
+    }
+
+    private void printRow(String[][] board, int row, int rowLabel, boolean flipped) {
+        System.out.print(" " + rowLabel + " ");
+        
+        for (int i = 0; i < 8; i++) {
+            int col = flipped ? 7 - i : i;
+            boolean isLightSquare = (row + col) % 2 == 0;
+            
+            if (isLightSquare) {
+                System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
+                System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
+            } else {
+                System.out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
+                System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE);
+            }
+            
+            System.out.print(board[row][col]);
+            System.out.print(EscapeSequences.RESET_BG_COLOR);
+            System.out.print(EscapeSequences.RESET_TEXT_COLOR);
+        }
+        
+        System.out.println(" " + rowLabel + " ");
     }
 
     private void postloginMenu() {
