@@ -14,24 +14,40 @@ public class ClientUI {
     public void run() {
         System.out.println("Welcome to 240 Chess. Type Help to get started.");
         
-        while (true) {
-            if (authToken == null) {
-                preloginMenu();
-            } else {
-                postloginMenu();
+        try {
+            while (true) {
+                if (authToken == null) {
+                    preloginMenu();
+                } else {
+                    postloginMenu();
+                }
             }
+        } catch (Exception e) {
+            System.out.println("An unexpected error occurred. Goodbye!");
+            System.exit(1);
         }
     }
 
     private void preloginMenu() {
         System.out.print("[LOGGED_OUT] >>> ");
-        String input = scanner.nextLine().trim().toLowerCase();
+        String input = scanner.nextLine();
+        
+        if (input == null) {
+            System.out.println("Goodbye!");
+            System.exit(0);
+        }
+        
+        input = input.trim().toLowerCase();
+        
+        if (input.isEmpty()) {
+            return;
+        }
         
         switch (input) {
-            case "help" -> printPreloginHelp();
-            case "register" -> handleRegister();
-            case "login" -> handleLogin();
-            case "quit" -> {
+            case "help", "h" -> printPreloginHelp();
+            case "register", "r" -> handleRegister();
+            case "login", "l" -> handleLogin();
+            case "quit", "q", "exit" -> {
                 System.out.println("Goodbye!");
                 System.exit(0);
             }
@@ -40,28 +56,34 @@ public class ClientUI {
     }
 
     private void printPreloginHelp() {
-        System.out.println("register <username> <password> <email> - to create an account");
-        System.out.println("login <username> <password> - to play chess");
-        System.out.println("quit - to exit");
-        System.out.println("help - to see this message");
+        System.out.println("register (r) - to create an account");
+        System.out.println("login (l) - to play chess");
+        System.out.println("quit (q) - to exit");
+        System.out.println("help (h) - to see this message");
     }
 
     private void handleRegister() {
-        System.out.print("Username: ");
-        String username = scanner.nextLine().trim();
-        
-        System.out.print("Password: ");
-        String password = scanner.nextLine().trim();
-        
-        System.out.print("Email: ");
-        String email = scanner.nextLine().trim();
-
-        if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
-            System.out.println("All fields are required.");
-            return;
-        }
-
         try {
+            System.out.print("Username: ");
+            String username = scanner.nextLine();
+            if (username == null) return;
+            username = username.trim();
+            
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+            if (password == null) return;
+            password = password.trim();
+            
+            System.out.print("Email: ");
+            String email = scanner.nextLine();
+            if (email == null) return;
+            email = email.trim();
+
+            if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
+                System.out.println("All fields are required.");
+                return;
+            }
+
             ServerFacade.RegisterResult result = serverFacade.register(username, password, email);
             authToken = result.authToken();
             System.out.println("Registration successful! Welcome " + result.username() + "!");
@@ -71,18 +93,22 @@ public class ClientUI {
     }
 
     private void handleLogin() {
-        System.out.print("Username: ");
-        String username = scanner.nextLine().trim();
-        
-        System.out.print("Password: ");
-        String password = scanner.nextLine().trim();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            System.out.println("Username and password are required.");
-            return;
-        }
-
         try {
+            System.out.print("Username: ");
+            String username = scanner.nextLine();
+            if (username == null) return;
+            username = username.trim();
+            
+            System.out.print("Password: ");
+            String password = scanner.nextLine();
+            if (password == null) return;
+            password = password.trim();
+
+            if (username.isEmpty() || password.isEmpty()) {
+                System.out.println("Username and password are required.");
+                return;
+            }
+
             ServerFacade.LoginResult result = serverFacade.login(username, password);
             authToken = result.authToken();
             System.out.println("Login successful! Welcome back " + result.username() + "!");
