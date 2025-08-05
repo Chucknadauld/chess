@@ -3,7 +3,9 @@ import java.util.List;
 import java.util.Scanner;
 
 import client.ServerFacade;
+import client.WebSocketClient;
 import ui.EscapeSequences;
+import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -199,6 +201,7 @@ public class ClientUI {
     
             System.out.println("Joined game as " + colorInput + " player!");
             System.out.println("Game: " + game.gameName());
+            connectToGameWebSocket();
             displayBoard();
     
         } catch (Exception e) {
@@ -217,6 +220,7 @@ public class ClientUI {
             playerColor = null;
     
             System.out.println("Now observing game: " + game.gameName());
+            connectToGameWebSocket();
             displayBoard();
     
         } catch (Exception e) {
@@ -408,5 +412,28 @@ public class ClientUI {
         } catch (Exception e) {
         }
         return errorMessage;
+    }
+
+    private void connectToGameWebSocket() {
+        try {
+            WebSocketClient.MessageHandler messageHandler = new WebSocketClient.MessageHandler() {
+                public void handleLoadGame(ChessGame game) {
+                    System.out.println("Game updated!");
+                }
+
+                public void handleError(String errorMessage) {
+                    System.out.println("Error: " + errorMessage);
+                }
+
+                public void handleNotification(String message) {
+                    System.out.println(message);
+                }
+            };
+
+            serverFacade.connectToGame(authToken, currentGameID, messageHandler);
+            System.out.println("Connected to game via WebSocket");
+        } catch (Exception e) {
+            System.out.println("Failed to connect to game: " + e.getMessage());
+        }
     }
 }
