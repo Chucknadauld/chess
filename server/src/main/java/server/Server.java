@@ -30,6 +30,8 @@ public class Server {
         get("/game", new ListGamesHandler(dataAccess));
         put("/game", new JoinGameHandler(dataAccess));
 
+        webSocket("/ws", WebSocketHandler.class);
+
         Spark.exception(Exception.class, (exception, request, response) -> {
             response.status(500);
             response.type("application/json");
