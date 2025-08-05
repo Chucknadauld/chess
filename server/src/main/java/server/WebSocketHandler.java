@@ -9,6 +9,9 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import websocket.commands.UserGameCommand;
 import websocket.commands.MakeMoveCommand;
 import websocket.messages.ServerMessage;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,7 +80,28 @@ public class WebSocketHandler {
     }
 
     private void sendErrorMessage(Session session, String errorMessage) throws IOException {
-        ServerMessage error = new ServerMessage(ServerMessage.ServerMessageType.ERROR);
+        ErrorMessage error = new ErrorMessage(errorMessage);
         session.getRemote().sendString(gson.toJson(error));
+    }
+
+    private void sendLoadGameMessage(Session session, chess.ChessGame game) throws IOException {
+        LoadGameMessage loadGame = new LoadGameMessage(game);
+        session.getRemote().sendString(gson.toJson(loadGame));
+    }
+
+    private void sendNotificationMessage(Session session, String message) throws IOException {
+        NotificationMessage notification = new NotificationMessage(message);
+        session.getRemote().sendString(gson.toJson(notification));
+    }
+
+    private void broadcastToGame(Integer gameID, String message, Session excludeSession) throws IOException {
+        ConcurrentHashMap<Session, String> gameSessions = gameToSessions.get(gameID);
+        if (gameSessions != null) {
+            for (Session session : gameSessions.keySet()) {
+                if (!session.equals(excludeSession) && session.isOpen()) {
+                    sendNotificationMessage(session, message);
+                }
+            }
+        }
     }
 }
