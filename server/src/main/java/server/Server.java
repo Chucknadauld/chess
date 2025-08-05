@@ -22,6 +22,8 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
+        webSocket("/ws", WebSocketHandler.class);
+
         delete("/db", new ClearHandler(dataAccess));
         post("/user", new RegisterHandler(dataAccess));
         post("/session", new LoginHandler(dataAccess));
@@ -29,8 +31,6 @@ public class Server {
         post("/game", new CreateGameHandler(dataAccess));
         get("/game", new ListGamesHandler(dataAccess));
         put("/game", new JoinGameHandler(dataAccess));
-
-        webSocket("/ws", WebSocketHandler.class);
 
         Spark.exception(Exception.class, (exception, request, response) -> {
             response.status(500);
