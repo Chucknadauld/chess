@@ -7,6 +7,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import websocket.commands.UserGameCommand;
+import websocket.commands.MakeMoveCommand;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
@@ -34,20 +35,20 @@ public class WebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws IOException {
         try {
-            UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+            UserGameCommand baseCommand = gson.fromJson(message, UserGameCommand.class);
             
-            switch (command.getCommandType()) {
+            switch (baseCommand.getCommandType()) {
                 case CONNECT:
-                    handleConnect(session, command);
+                    handleConnect(session, baseCommand);
                     break;
                 case MAKE_MOVE:
-                    handleMakeMove(session, command);
+                    handleMakeMove(session, message);
                     break;
                 case LEAVE:
-                    handleLeave(session, command);
+                    handleLeave(session, baseCommand);
                     break;
                 case RESIGN:
-                    handleResign(session, command);
+                    handleResign(session, baseCommand);
                     break;
             }
         } catch (Exception e) {
@@ -62,8 +63,9 @@ public class WebSocketHandler {
         System.out.println("Client connected to game " + command.getGameID());
     }
 
-    private void handleMakeMove(Session session, UserGameCommand command) throws IOException {
-        System.out.println("Handling make move for game " + command.getGameID());
+    private void handleMakeMove(Session session, String message) throws IOException {
+        MakeMoveCommand command = gson.fromJson(message, MakeMoveCommand.class);
+        System.out.println("Handling make move for game " + command.getGameID() + " with move " + command.getMove());
     }
 
     private void handleLeave(Session session, UserGameCommand command) throws IOException {
