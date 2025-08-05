@@ -1,5 +1,10 @@
 package client;
 import com.google.gson.Gson;
+import websocket.commands.ConnectCommand;
+import websocket.commands.MakeMoveCommand;
+import websocket.commands.LeaveCommand;
+import websocket.commands.ResignCommand;
+import chess.ChessMove;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,6 +16,7 @@ public class ServerFacade {
     private final String serverUrl;
     private final HttpClient httpClient;
     private final Gson gson;
+    private WebSocketClient webSocketClient;
 
     public ServerFacade(String serverUrl) {
         this.serverUrl = serverUrl;
@@ -188,6 +194,43 @@ public class ServerFacade {
             }
         } catch (IOException | InterruptedException e) {
             throw new Exception("Failed to connect to server: " + e.getMessage());
+        }
+    }
+
+    public void connectToGame(String authToken, int gameID, WebSocketClient.MessageHandler messageHandler) throws Exception {
+        webSocketClient = new WebSocketClient(serverUrl, messageHandler);
+        ConnectCommand connectCommand = new ConnectCommand(authToken, gameID);
+        webSocketClient.sendCommand(connectCommand);
+    }
+
+    public void makeMove(String authToken, int gameID, ChessMove move) throws Exception {
+        if (webSocketClient == null) {
+            throw new Exception("Not connected to game");
+        }
+        MakeMoveCommand makeMoveCommand = new MakeMoveCommand(authToken, gameID, move);
+        webSocketClient.sendCommand(makeMoveCommand);
+    }
+
+    public void leaveGame(String authToken, int gameID) throws Exception {
+        if (webSocketClient == null) {
+            throw new Exception("Not connected to game");
+        }
+        LeaveCommand leaveCommand = new LeaveCommand(authToken, gameID);
+        webSocketClient.sendCommand(leaveCommand);
+    }
+
+    public void resignGame(String authToken, int gameID) throws Exception {
+        if (webSocketClient == null) {
+            throw new Exception("Not connected to game");
+        }
+        ResignCommand resignCommand = new ResignCommand(authToken, gameID);
+        webSocketClient.sendCommand(resignCommand);
+    }
+
+    public void disconnectFromGame() throws Exception {
+        if (webSocketClient != null) {
+            webSocketClient.close();
+            webSocketClient = null;
         }
     }
 }
