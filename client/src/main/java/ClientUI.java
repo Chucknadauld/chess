@@ -6,6 +6,7 @@ import client.ServerFacade;
 import client.WebSocketClient;
 import ui.EscapeSequences;
 import ui.ChessBoardRenderer;
+import ui.AuthHandler;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
@@ -24,6 +25,7 @@ public class ClientUI {
     private final Gson gson;
     private ChessGame currentGame;
     private final ChessBoardRenderer boardRenderer;
+    private final AuthHandler authHandler;
 
     public ClientUI(String serverUrl) {
         this.serverFacade = new ServerFacade(serverUrl);
@@ -35,6 +37,7 @@ public class ClientUI {
         this.gson = new Gson();
         this.currentGame = null;
         this.boardRenderer = new ChessBoardRenderer();
+        this.authHandler = new AuthHandler(serverFacade, scanner);
     }
 
     public void run() {
@@ -89,61 +92,25 @@ public class ClientUI {
     }
 
     private void handleRegister() {
-        try {
-            System.out.print("Username: ");
-            String username = scanner.nextLine().trim();
-            
-            System.out.print("Password: ");
-            String password = scanner.nextLine().trim();
-            
-            System.out.print("Email: ");
-            String email = scanner.nextLine().trim();
-
-            if (username.isEmpty() || password.isEmpty() || email.isEmpty()) {
-                System.out.println("All fields are required.");
-                return;
-            }
-
-            ServerFacade.RegisterResult result = serverFacade.register(username, password, email);
-            authToken = result.authToken();
-            System.out.println("Registration successful! Welcome " + result.username() + "!");
-        } catch (Exception e) {
-            System.out.println(parseErrorMessage(e.getMessage()));
+        String token = authHandler.handleRegister();
+        if (token != null) {
+            authToken = token;
         }
     }
 
     private void handleLogin() {
-        try {
-            System.out.print("Username: ");
-            String username = scanner.nextLine().trim();
-            
-            System.out.print("Password: ");
-            String password = scanner.nextLine().trim();
-
-            if (username.isEmpty() || password.isEmpty()) {
-                System.out.println("Username and password are required.");
-                return;
-            }
-
-            ServerFacade.LoginResult result = serverFacade.login(username, password);
-            authToken = result.authToken();
-            System.out.println("Login successful! Welcome back " + result.username() + "!");
-        } catch (Exception e) {
-            System.out.println(parseErrorMessage(e.getMessage()));
+        String token = authHandler.handleLogin();
+        if (token != null) {
+            authToken = token;
         }
     }
 
     private void handleLogout() {
-        try {
-            serverFacade.logout(authToken);
-            authToken = null;
-            currentGames.clear();
-            currentGameID = null;
-            playerColor = null;
-            System.out.println("You have been logged out.");
-        } catch (Exception e) {
-            System.out.println(parseErrorMessage(e.getMessage()));
-        }
+        authHandler.handleLogout(authToken);
+        authToken = null;
+        currentGames.clear();
+        currentGameID = null;
+        playerColor = null;
     }
 
     private void handleCreateGame() {
