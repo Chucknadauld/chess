@@ -22,13 +22,8 @@ public class AuthHandler {
 
         try {
             ServerFacade.RegisterResult result = serverFacade.register(username, password, email);
-            if (result.authToken() != null) {
-                System.out.println("Registration successful! You are now logged in.");
-                return result.authToken();
-            } else {
-                System.out.println("Registration failed: " + result.message());
-                return null;
-            }
+            System.out.println("Registration successful! Welcome " + result.username() + "!");
+            return result.authToken();
         } catch (Exception e) {
             System.out.println("Registration failed: " + e.getMessage());
             return null;
@@ -43,13 +38,8 @@ public class AuthHandler {
 
         try {
             ServerFacade.LoginResult result = serverFacade.login(username, password);
-            if (result.authToken() != null) {
-                System.out.println("Login successful!");
-                return result.authToken();
-            } else {
-                System.out.println("Login failed: " + result.message());
-                return null;
-            }
+            System.out.println("Login successful! Welcome back " + result.username() + "!");
+            return result.authToken();
         } catch (Exception e) {
             System.out.println("Login failed: " + e.getMessage());
             return null;
