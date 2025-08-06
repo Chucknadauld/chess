@@ -22,6 +22,7 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
+        WebSocketHandler.setDataAccess(dataAccess);
         webSocket("/ws", WebSocketHandler.class);
 
         delete("/db", new ClearHandler(dataAccess));

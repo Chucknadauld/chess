@@ -39,21 +39,17 @@ public class WebSocketClient {
     @OnMessage
     public void onMessage(String message) {
         try {
-            ServerMessage baseMessage = gson.fromJson(message, ServerMessage.class);
+            ServerMessage msg = gson.fromJson(message, ServerMessage.class);
             
-            switch (baseMessage.getServerMessageType()) {
-                case LOAD_GAME:
-                    LoadGameMessage loadGameMessage = gson.fromJson(message, LoadGameMessage.class);
-                    messageHandler.handleLoadGame(loadGameMessage.getGame());
-                    break;
-                case ERROR:
-                    ErrorMessage errorMessage = gson.fromJson(message, ErrorMessage.class);
-                    messageHandler.handleError(errorMessage.getErrorMessage());
-                    break;
-                case NOTIFICATION:
-                    NotificationMessage notificationMessage = gson.fromJson(message, NotificationMessage.class);
-                    messageHandler.handleNotification(notificationMessage.getMessage());
-                    break;
+            if (msg.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME) {
+                LoadGameMessage loadMsg = gson.fromJson(message, LoadGameMessage.class);
+                messageHandler.handleLoadGame(loadMsg.getGame());
+            } else if (msg.getServerMessageType() == ServerMessage.ServerMessageType.ERROR) {
+                ErrorMessage errMsg = gson.fromJson(message, ErrorMessage.class);
+                messageHandler.handleError(errMsg.getErrorMessage());
+            } else if (msg.getServerMessageType() == ServerMessage.ServerMessageType.NOTIFICATION) {
+                NotificationMessage notifMsg = gson.fromJson(message, NotificationMessage.class);
+                messageHandler.handleNotification(notifMsg.getMessage());
             }
         } catch (Exception e) {
             System.err.println("Error processing message: " + e.getMessage());
@@ -72,8 +68,8 @@ public class WebSocketClient {
 
     public void sendCommand(UserGameCommand command) throws IOException {
         if (session != null && session.isOpen()) {
-            String message = gson.toJson(command);
-            session.getBasicRemote().sendText(message);
+            String msg = gson.toJson(command);
+            session.getBasicRemote().sendText(msg);
         } else {
             throw new IOException("WebSocket connection is not open");
         }

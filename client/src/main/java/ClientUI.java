@@ -6,6 +6,8 @@ import client.ServerFacade;
 import client.WebSocketClient;
 import ui.EscapeSequences;
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -328,6 +330,14 @@ public class ClientUI {
     }
 
     private void postloginMenu() {
+        if (currentGameID != null) {
+            gameplayMenu();
+        } else {
+            mainMenu();
+        }
+    }
+
+    private void mainMenu() {
         System.out.print("[LOGGED_IN] >>> ");
         String input = scanner.nextLine();
         
@@ -353,6 +363,33 @@ public class ClientUI {
                 System.out.println("Goodbye!");
                 System.exit(0);
             }
+            default -> System.out.println("Unknown command. Type 'help' for available commands.");
+        }
+    }
+
+    private void gameplayMenu() {
+        System.out.print("[IN_GAME] >>> ");
+        String input = scanner.nextLine();
+        
+        if (input == null) {
+            return;
+        }
+        
+        input = input.trim().toLowerCase();
+        
+        if (input.isEmpty()) {
+            return;
+        }
+        
+        String[] parts = input.split(" ");
+        String command = parts[0];
+        
+        switch (command) {
+            case "help" -> printGameplayHelp();
+            case "move" -> handleMove(parts);
+            case "leave" -> handleLeaveGame();
+            case "redraw" -> displayBoard();
+            case "quit", "exit" -> handleLeaveGame();
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
         }
     }
@@ -418,7 +455,8 @@ public class ClientUI {
         try {
             WebSocketClient.MessageHandler messageHandler = new WebSocketClient.MessageHandler() {
                 public void handleLoadGame(ChessGame game) {
-                    System.out.println("Game updated!");
+                    System.out.println("Game updated! Redrawing board...");
+                    displayBoardFromGame(game);
                 }
 
                 public void handleError(String errorMessage) {
@@ -434,6 +472,123 @@ public class ClientUI {
             System.out.println("Connected to game via WebSocket");
         } catch (Exception e) {
             System.out.println("Failed to connect to game: " + e.getMessage());
+        }
+    }
+
+    private void displayBoardFromGame(ChessGame game) {
+        boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
+        String[][] board = convertChessGameToBoard(game);
+        
+        System.out.println();
+        
+        if (whiteBottom) {
+            printColumnLabels(false);
+            for (int row = 7; row >= 0; row--) {
+                printRow(board, row, row + 1, false);
+            }
+            printColumnLabels(false);
+        } else {
+            printColumnLabels(true);
+            for (int row = 0; row < 8; row++) {
+                printRow(board, row, row + 1, true);
+            }
+            printColumnLabels(true);
+        }
+        
+        System.out.println();
+    }
+
+    private String[][] convertChessGameToBoard(ChessGame game) {
+        String[][] board = new String[8][8];
+        
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                chess.ChessPosition pos = new chess.ChessPosition(row + 1, col + 1);
+                chess.ChessPiece piece = game.getBoard().getPiece(pos);
+                
+                if (piece == null) {
+                    board[row][col] = EscapeSequences.EMPTY;
+                } else {
+                    board[row][col] = getPieceSymbol(piece);
+                }
+            }
+        }
+        
+        return board;
+    }
+
+    private void printGameplayHelp() {
+        System.out.println("move <from> <to> - make a move (e.g., move e2 e4)");
+        System.out.println("leave - leave the game");
+        System.out.println("redraw - redraw the board");
+        System.out.println("help - see this message");
+    }
+
+    private void handleMove(String[] parts) {
+        if (parts.length < 3) {
+            System.out.println("Usage: move <from> <to> (e.g., move e2 e4)");
+            return;
+        }
+
+        try {
+            ChessPosition from = parsePosition(parts[1]);
+            ChessPosition to = parsePosition(parts[2]);
+            ChessMove move = new ChessMove(from, to, null);
+            
+            serverFacade.makeMove(authToken, currentGameID, move);
+            System.out.println("Move sent!");
+        } catch (Exception e) {
+            System.out.println("Invalid move: " + e.getMessage());
+        }
+    }
+
+    private void handleLeaveGame() {
+        try {
+            if (currentGameID != null) {
+                serverFacade.leaveGame(authToken, currentGameID);
+                serverFacade.disconnectFromGame();
+                currentGameID = null;
+                playerColor = null;
+                System.out.println("Left the game");
+            }
+        } catch (Exception e) {
+            System.out.println("Error leaving game: " + e.getMessage());
+        }
+    }
+
+    private ChessPosition parsePosition(String pos) {
+        if (pos.length() != 2) {
+            throw new IllegalArgumentException("Invalid position format");
+        }
+        
+        char col = pos.charAt(0);
+        char row = pos.charAt(1);
+        
+        if (col < 'a' || col > 'h' || row < '1' || row > '8') {
+            throw new IllegalArgumentException("Position out of bounds");
+        }
+        
+        return new ChessPosition(row - '0', col - 'a' + 1);
+    }
+
+    private String getPieceSymbol(chess.ChessPiece piece) {
+        boolean isWhite = piece.getTeamColor() == chess.ChessGame.TeamColor.WHITE;
+        
+        switch (piece.getPieceType()) {
+            case KING:
+                return isWhite ? EscapeSequences.WHITE_KING : EscapeSequences.BLACK_KING;
+            case QUEEN:
+                return isWhite ? EscapeSequences.WHITE_QUEEN : EscapeSequences.BLACK_QUEEN;
+            case BISHOP:
+                return isWhite ? EscapeSequences.WHITE_BISHOP : EscapeSequences.BLACK_BISHOP;
+            case KNIGHT:
+                return isWhite ? EscapeSequences.WHITE_KNIGHT : EscapeSequences.BLACK_KNIGHT;
+            case ROOK:
+                return isWhite ? EscapeSequences.WHITE_ROOK : EscapeSequences.BLACK_ROOK;
+            case PAWN:
+                return isWhite ? EscapeSequences.WHITE_PAWN : EscapeSequences.BLACK_PAWN;
+            default:
+                return EscapeSequences.EMPTY;
         }
     }
 }
