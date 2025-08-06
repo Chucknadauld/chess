@@ -10,6 +10,8 @@ import chess.ChessMove;
 import chess.ChessPosition;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class ClientUI {
     private final ServerFacade serverFacade;
@@ -19,6 +21,8 @@ public class ClientUI {
     private Integer currentGameID;
     private String playerColor;
     private final Gson gson;
+    private ChessGame currentGame;
+    private HashSet<ChessPosition> highlightedSquares;
 
     public ClientUI(String serverUrl) {
         this.serverFacade = new ServerFacade(serverUrl);
@@ -28,6 +32,8 @@ public class ClientUI {
         this.currentGameID = null;
         this.playerColor = null;
         this.gson = new Gson();
+        this.currentGame = null;
+        this.highlightedSquares = new HashSet<>();
     }
 
     public void run() {
@@ -311,8 +317,13 @@ public class ClientUI {
         for (int i = 0; i < 8; i++) {
             int col = flipped ? 7 - i : i;
             boolean isLightSquare = (row + col) % 2 != 0;
+            ChessPosition pos = new ChessPosition(row + 1, col + 1);
+            boolean isHighlighted = highlightedSquares.contains(pos);
             
-            if (isLightSquare) {
+            if (isHighlighted) {
+                System.out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
+                System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
+            } else if (isLightSquare) {
                 System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
                 System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
             } else {
@@ -391,19 +402,19 @@ public class ClientUI {
             case "resign" -> handleResignGame();
             case "redraw" -> redrawBoard();
             case "highlight" -> handleHighlight(parts);
+            case "clear" -> clearHighlights();
             case "quit", "exit" -> handleLeaveGame();
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
         }
     }
 
     private void printPostloginHelp() {
-        System.out.println("create (c) <name> - create a new game");
+        System.out.println("create - create a new game");
         System.out.println("list - list all games");
-        System.out.println("play <id> [WHITE|BLACK] - join a game as a player");
-        System.out.println("observe <id> - watch a game");
+        System.out.println("play - join a game as a player");
+        System.out.println("observe - watch a game");
         System.out.println("logout - sign out");
         System.out.println("quit - exit");
-        System.out.println("help - see this message");
     }
 
     private ServerFacade.GameData promptUserForGame() {
@@ -457,6 +468,8 @@ public class ClientUI {
         try {
             WebSocketClient.MessageHandler messageHandler = new WebSocketClient.MessageHandler() {
                 public void handleLoadGame(ChessGame game) {
+                    currentGame = game;
+                    highlightedSquares.clear();
                     System.out.println("\n=== Game Updated ===");
                     displayBoardFromGame(game);
                 }
@@ -513,8 +526,8 @@ public class ClientUI {
         }
         System.out.println("redraw - redraw the board");
         System.out.println("highlight <position> - show legal moves (e.g., highlight e2)");
+        System.out.println("clear - clear move highlights");
         System.out.println("leave - leave the game");
-        System.out.println("help - see this message");
     }
 
     private void handleMove(String[] parts) {
@@ -572,7 +585,11 @@ public class ClientUI {
 
     private void redrawBoard() {
         System.out.println("\nCurrent board state:");
-        displayBoard();
+        if (currentGame != null) {
+            displayBoardFromGame(currentGame);
+        } else {
+            displayBoard();
+        }
     }
 
     private void handleHighlight(String[] parts) {
@@ -581,12 +598,37 @@ public class ClientUI {
             return;
         }
 
+        if (currentGame == null) {
+            System.out.println("No game loaded yet");
+            return;
+        }
+
         try {
             ChessPosition pos = parsePosition(parts[1]);
-            System.out.println("Highlighting legal moves for piece at " + parts[1] + ":");
-            System.out.println("TODO: Implement legal move highlighting");
+            highlightedSquares.clear();
+            
+            Collection<ChessMove> legalMoves = currentGame.validMoves(pos);
+            if (legalMoves.isEmpty()) {
+                System.out.println("No legal moves for piece at " + parts[1]);
+                return;
+            }
+
+            for (ChessMove move : legalMoves) {
+                highlightedSquares.add(move.getEndPosition());
+            }
+            
+            System.out.println("Highlighting " + legalMoves.size() + " legal moves for piece at " + parts[1] + ":");
+            displayBoardFromGame(currentGame);
         } catch (Exception e) {
             System.out.println("Invalid position: " + e.getMessage());
+        }
+    }
+
+    private void clearHighlights() {
+        highlightedSquares.clear();
+        System.out.println("Cleared move highlights");
+        if (currentGame != null) {
+            displayBoardFromGame(currentGame);
         }
     }
 
