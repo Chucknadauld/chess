@@ -115,7 +115,8 @@ public class WebSocketHandler {
             sendLoadGameMessage(session, game.game());
 
             String user = auth.username();
-            String msg = user + " joined the game";
+            boolean isPlayer = user.equals(game.whiteUsername()) || user.equals(game.blackUsername());
+            String msg = isPlayer ? user + " joined the game" : user + " is observing the game";
             broadcastToGame(command.getGameID(), msg, session);
 
             System.out.println("User " + user + " connected to game " + command.getGameID());
@@ -173,7 +174,9 @@ public class WebSocketHandler {
                 }
             }
 
-            String moveMsg = user + " moved " + command.getMove().toString();
+            String fromSquare = positionToString(command.getMove().getStartPosition());
+            String toSquare = positionToString(command.getMove().getEndPosition());
+            String moveMsg = user + " moved " + fromSquare + " to " + toSquare;
             broadcastToGame(command.getGameID(), moveMsg, null);
 
             chess.ChessGame.TeamColor nextTurn = chessGame.getTeamTurn();
@@ -289,5 +292,11 @@ public class WebSocketHandler {
                 }
             }
         }
+    }
+
+    private String positionToString(chess.ChessPosition pos) {
+        char col = (char) ('a' + pos.getColumn() - 1);
+        char row = (char) ('0' + pos.getRow());
+        return "" + col + row;
     }
 }

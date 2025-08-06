@@ -470,8 +470,10 @@ public class ClientUI {
                 public void handleLoadGame(ChessGame game) {
                     currentGame = game;
                     highlightedSquares.clear();
-                    System.out.println("\n=== Game Updated ===");
+                    System.out.print("\n=== Game Updated ===");
                     displayBoardFromGame(game);
+                    String prompt = playerColor != null ? "[" + playerColor + " PLAYER] >>> " : "[OBSERVER] >>> ";
+                    System.out.print(prompt);
                 }
 
                 public void handleError(String errorMessage) {
@@ -479,7 +481,9 @@ public class ClientUI {
                 }
 
                 public void handleNotification(String message) {
-                    System.out.println("\n>>> " + message);
+                    System.out.print("\n>>> " + message);
+                    String prompt = playerColor != null ? "\n[" + playerColor + " PLAYER] >>> " : "\n[OBSERVER] >>> ";
+                    System.out.print(prompt);
                 }
             };
 
