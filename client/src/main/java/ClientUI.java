@@ -204,7 +204,6 @@ public class ClientUI {
             System.out.println("Joined game as " + colorInput + " player!");
             System.out.println("Game: " + game.gameName());
             connectToGameWebSocket();
-            displayBoard();
     
         } catch (Exception e) {
             System.out.println(parseErrorMessage(e.getMessage()));
@@ -223,7 +222,6 @@ public class ClientUI {
     
             System.out.println("Now observing game: " + game.gameName());
             connectToGameWebSocket();
-            displayBoard();
     
         } catch (Exception e) {
             System.out.println(parseErrorMessage(e.getMessage()));
@@ -232,11 +230,14 @@ public class ClientUI {
 
     private void displayBoard() {
         boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
-        
         String[][] board = createStartingBoard();
         
         System.out.println();
-        
+        drawChessBoard(board, whiteBottom);
+        System.out.println();
+    }
+
+    private void drawChessBoard(String[][] board, boolean whiteBottom) {
         if (whiteBottom) {
             printColumnLabels(false);
             for (int row = 7; row >= 0; row--) {
@@ -250,8 +251,6 @@ public class ClientUI {
             }
             printColumnLabels(true);
         }
-        
-        System.out.println();
     }
 
     private String[][] createStartingBoard() {
@@ -368,28 +367,30 @@ public class ClientUI {
     }
 
     private void gameplayMenu() {
-        System.out.print("[IN_GAME] >>> ");
+        String prompt = playerColor != null ? "[" + playerColor + " PLAYER] >>> " : "[OBSERVER] >>> ";
+        System.out.print(prompt);
         String input = scanner.nextLine();
         
         if (input == null) {
             return;
         }
         
-        input = input.trim().toLowerCase();
+        input = input.trim();
         
         if (input.isEmpty()) {
             return;
         }
         
         String[] parts = input.split(" ");
-        String command = parts[0];
+        String command = parts[0].toLowerCase();
         
         switch (command) {
             case "help" -> printGameplayHelp();
             case "move" -> handleMove(parts);
             case "leave" -> handleLeaveGame();
             case "resign" -> handleResignGame();
-            case "redraw" -> displayBoard();
+            case "redraw" -> redrawBoard();
+            case "highlight" -> handleHighlight(parts);
             case "quit", "exit" -> handleLeaveGame();
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
         }
@@ -456,7 +457,7 @@ public class ClientUI {
         try {
             WebSocketClient.MessageHandler messageHandler = new WebSocketClient.MessageHandler() {
                 public void handleLoadGame(ChessGame game) {
-                    System.out.println("Game updated! Redrawing board...");
+                    System.out.println("\n=== Game Updated ===");
                     displayBoardFromGame(game);
                 }
 
@@ -465,7 +466,7 @@ public class ClientUI {
                 }
 
                 public void handleNotification(String message) {
-                    System.out.println(message);
+                    System.out.println("\n>>> " + message);
                 }
             };
 
@@ -481,21 +482,7 @@ public class ClientUI {
         String[][] board = convertChessGameToBoard(game);
         
         System.out.println();
-        
-        if (whiteBottom) {
-            printColumnLabels(false);
-            for (int row = 7; row >= 0; row--) {
-                printRow(board, row, row + 1, false);
-            }
-            printColumnLabels(false);
-        } else {
-            printColumnLabels(true);
-            for (int row = 0; row < 8; row++) {
-                printRow(board, row, row + 1, true);
-            }
-            printColumnLabels(true);
-        }
-        
+        drawChessBoard(board, whiteBottom);
         System.out.println();
     }
 
@@ -519,10 +506,14 @@ public class ClientUI {
     }
 
     private void printGameplayHelp() {
-        System.out.println("move <from> <to> - make a move (e.g., move e2 e4)");
-        System.out.println("leave - leave the game");
-        System.out.println("resign - forfeit the game");
+        System.out.println("Available commands:");
+        if (playerColor != null) {
+            System.out.println("move <from> <to> - make a move (e.g., move e2 e4)");
+            System.out.println("resign - forfeit the game");
+        }
         System.out.println("redraw - redraw the board");
+        System.out.println("highlight <position> - show legal moves (e.g., highlight e2)");
+        System.out.println("leave - leave the game");
         System.out.println("help - see this message");
     }
 
@@ -576,6 +567,26 @@ public class ClientUI {
             }
         } else {
             System.out.println("Resign cancelled");
+        }
+    }
+
+    private void redrawBoard() {
+        System.out.println("\nCurrent board state:");
+        displayBoard();
+    }
+
+    private void handleHighlight(String[] parts) {
+        if (parts.length < 2) {
+            System.out.println("Usage: highlight <position> (e.g., highlight e2)");
+            return;
+        }
+
+        try {
+            ChessPosition pos = parsePosition(parts[1]);
+            System.out.println("Highlighting legal moves for piece at " + parts[1] + ":");
+            System.out.println("TODO: Implement legal move highlighting");
+        } catch (Exception e) {
+            System.out.println("Invalid position: " + e.getMessage());
         }
     }
 
