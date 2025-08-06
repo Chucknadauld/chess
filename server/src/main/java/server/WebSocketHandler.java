@@ -25,6 +25,7 @@ public class WebSocketHandler {
     
     private final ConcurrentHashMap<Session, String> sessionToAuthToken = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, ConcurrentHashMap<Session, String>> gameToSessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Boolean> gameOverState = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
     private static DataAccess dataAccess;
 
@@ -152,6 +153,11 @@ public class WebSocketHandler {
                 return;
             }
 
+            if (gameOverState.getOrDefault(command.getGameID(), false)) {
+                sendErrorMessage(session, "Game is over");
+                return;
+            }
+
             chess.ChessGame.TeamColor currentTurn = chessGame.getTeamTurn();
             if ((currentTurn == chess.ChessGame.TeamColor.WHITE && !isWhitePlayer) ||
                 (currentTurn == chess.ChessGame.TeamColor.BLACK && !isBlackPlayer)) {
@@ -177,13 +183,14 @@ public class WebSocketHandler {
             String fromSquare = positionToString(command.getMove().getStartPosition());
             String toSquare = positionToString(command.getMove().getEndPosition());
             String moveMsg = user + " moved " + fromSquare + " to " + toSquare;
-            broadcastToGame(command.getGameID(), moveMsg, null);
+            broadcastToGame(command.getGameID(), moveMsg, session);
 
             chess.ChessGame.TeamColor nextTurn = chessGame.getTeamTurn();
             if (chessGame.isInCheck(nextTurn)) {
                 if (chessGame.isInCheckmate(nextTurn)) {
                     String checkmateMsg = user + " wins! " + (nextTurn == chess.ChessGame.TeamColor.WHITE ? "White" : "Black") + " is in checkmate";
                     broadcastToGame(command.getGameID(), checkmateMsg, null);
+                    gameOverState.put(command.getGameID(), true);
                 } else {
                     String checkMsg = (nextTurn == chess.ChessGame.TeamColor.WHITE ? "White" : "Black") + " is in check";
                     broadcastToGame(command.getGameID(), checkMsg, null);
@@ -191,6 +198,7 @@ public class WebSocketHandler {
             } else if (chessGame.isInStalemate(nextTurn)) {
                 String stalemateMsg = "Game is a draw by stalemate";
                 broadcastToGame(command.getGameID(), stalemateMsg, null);
+                gameOverState.put(command.getGameID(), true);
             }
 
         } catch (chess.InvalidMoveException e) {
@@ -210,6 +218,17 @@ public class WebSocketHandler {
 
             String user = auth.username();
             Integer gameID = command.getGameID();
+
+            GameData game = dataAccess.getGame(gameID);
+            if (game != null) {
+                if (user.equals(game.whiteUsername())) {
+                    GameData updatedGame = new GameData(game.gameID(), null, game.blackUsername(), game.gameName(), game.game());
+                    dataAccess.updateGame(updatedGame);
+                } else if (user.equals(game.blackUsername())) {
+                    GameData updatedGame = new GameData(game.gameID(), game.whiteUsername(), null, game.gameName(), game.game());
+                    dataAccess.updateGame(updatedGame);
+                }
+            }
 
             sessionToAuthToken.remove(session);
             ConcurrentHashMap<Session, String> sessions = gameToSessions.get(gameID);
@@ -252,6 +271,11 @@ public class WebSocketHandler {
                 return;
             }
 
+            if (gameOverState.getOrDefault(command.getGameID(), false)) {
+                sendErrorMessage(session, "Game is over");
+                return;
+            }
+
             String winner;
             if (isWhitePlayer) {
                 winner = game.blackUsername() != null ? game.blackUsername() : "Black";
@@ -261,6 +285,7 @@ public class WebSocketHandler {
 
             String resignMsg = user + " resigned. " + winner + " wins!";
             broadcastToGame(command.getGameID(), resignMsg, null);
+            gameOverState.put(command.getGameID(), true);
 
             System.out.println("User " + user + " resigned from game " + command.getGameID());
         } catch (DataAccessException e) {
