@@ -5,6 +5,7 @@ import java.util.Scanner;
 import client.ServerFacade;
 import client.WebSocketClient;
 import ui.EscapeSequences;
+import ui.ChessBoardRenderer;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPosition;
@@ -22,7 +23,7 @@ public class ClientUI {
     private String playerColor;
     private final Gson gson;
     private ChessGame currentGame;
-    private HashSet<ChessPosition> highlightedSquares;
+    private final ChessBoardRenderer boardRenderer;
 
     public ClientUI(String serverUrl) {
         this.serverFacade = new ServerFacade(serverUrl);
@@ -33,7 +34,7 @@ public class ClientUI {
         this.playerColor = null;
         this.gson = new Gson();
         this.currentGame = null;
-        this.highlightedSquares = new HashSet<>();
+        this.boardRenderer = new ChessBoardRenderer();
     }
 
     public void run() {
@@ -232,111 +233,6 @@ public class ClientUI {
         } catch (Exception e) {
             System.out.println(parseErrorMessage(e.getMessage()));
         }
-    }    
-
-    private void displayBoard() {
-        boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
-        String[][] board = createStartingBoard();
-        
-        System.out.println();
-        drawChessBoard(board, whiteBottom);
-        System.out.println();
-    }
-
-    private void drawChessBoard(String[][] board, boolean whiteBottom) {
-        if (whiteBottom) {
-            printColumnLabels(false);
-            for (int row = 7; row >= 0; row--) {
-                printRow(board, row, row + 1, false);
-            }
-            printColumnLabels(false);
-        } else {
-            printColumnLabels(true);
-            for (int row = 0; row < 8; row++) {
-                printRow(board, row, row + 1, true);
-            }
-            printColumnLabels(true);
-        }
-    }
-
-    private String[][] createStartingBoard() {
-        String[][] board = new String[8][8];
-        
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                board[row][col] = EscapeSequences.EMPTY;
-            }
-        }
-        
-        board[0][0] = EscapeSequences.BLACK_ROOK;
-        board[0][1] = EscapeSequences.BLACK_KNIGHT;
-        board[0][2] = EscapeSequences.BLACK_BISHOP;
-        board[0][3] = EscapeSequences.BLACK_QUEEN;
-        board[0][4] = EscapeSequences.BLACK_KING;
-        board[0][5] = EscapeSequences.BLACK_BISHOP;
-        board[0][6] = EscapeSequences.BLACK_KNIGHT;
-        board[0][7] = EscapeSequences.BLACK_ROOK;
-        
-        for (int col = 0; col < 8; col++) {
-            board[1][col] = EscapeSequences.BLACK_PAWN;
-        }
-        
-        for (int col = 0; col < 8; col++) {
-            board[6][col] = EscapeSequences.WHITE_PAWN;
-        }
-        
-        board[7][0] = EscapeSequences.WHITE_ROOK;
-        board[7][1] = EscapeSequences.WHITE_KNIGHT;
-        board[7][2] = EscapeSequences.WHITE_BISHOP;
-        board[7][3] = EscapeSequences.WHITE_QUEEN;
-        board[7][4] = EscapeSequences.WHITE_KING;
-        board[7][5] = EscapeSequences.WHITE_BISHOP;
-        board[7][6] = EscapeSequences.WHITE_KNIGHT;
-        board[7][7] = EscapeSequences.WHITE_ROOK;
-        
-        return board;
-    }
-
-    private void printColumnLabels(boolean flipped) {
-        System.out.print("   ");
-        if (flipped) {
-            for (char col = 'h'; col >= 'a'; col--) {
-                System.out.print(" " + col + " ");
-            }
-        } else {
-            for (char col = 'a'; col <= 'h'; col++) {
-                System.out.print(" " + col + " ");
-            }
-        }
-        System.out.println();
-    }
-
-    private void printRow(String[][] board, int row, int rowLabel, boolean flipped) {
-        System.out.print(" " + rowLabel + " ");
-        
-        for (int i = 0; i < 8; i++) {
-            int col = flipped ? 7 - i : i;
-            boolean isLightSquare = (row + col) % 2 != 0;
-            ChessPosition pos = new ChessPosition(row + 1, col + 1);
-            boolean isHighlighted = highlightedSquares.contains(pos);
-            
-            if (isHighlighted) {
-                System.out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
-                System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
-            } else if (isLightSquare) {
-                System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
-                System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
-            } else {
-                System.out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
-                System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE);
-            }
-            
-            System.out.print(board[row][col]);
-            System.out.print(EscapeSequences.RESET_BG_COLOR);
-            System.out.print(EscapeSequences.RESET_TEXT_COLOR);
-        }
-        
-        System.out.println(" " + rowLabel + " ");
     }
 
     private void postloginMenu() {
@@ -445,20 +341,25 @@ public class ClientUI {
         try {
             int jsonStart = errorMessage.indexOf("{\"message\":");
             if (jsonStart != -1) {
-                int jsonEnd = errorMessage.lastIndexOf("}") + 1;
-                if (jsonEnd > jsonStart) {
-                    String jsonPart = errorMessage.substring(jsonStart, jsonEnd);
-                    JsonObject jsonError = gson.fromJson(jsonPart, JsonObject.class);
-                    if (jsonError != null && jsonError.has("message")) {
-                        String cleanMessage = jsonError.get("message").getAsString();
-                        if (cleanMessage.startsWith("Error: ")) {
-                            cleanMessage = cleanMessage.substring(7);
-                        }
-                        return errorMessage.substring(0, jsonStart) + cleanMessage;
-                    }
-                }
+                return extractMessageFromJson(errorMessage, jsonStart);
             }
         } catch (Exception e) {
+        }
+        return errorMessage;
+    }
+
+    private String extractMessageFromJson(String errorMessage, int jsonStart) {
+        int jsonEnd = errorMessage.lastIndexOf("}") + 1;
+        if (jsonEnd > jsonStart) {
+            String jsonPart = errorMessage.substring(jsonStart, jsonEnd);
+            JsonObject jsonError = gson.fromJson(jsonPart, JsonObject.class);
+            if (jsonError != null && jsonError.has("message")) {
+                String cleanMessage = jsonError.get("message").getAsString();
+                if (cleanMessage.startsWith("Error: ")) {
+                    cleanMessage = cleanMessage.substring(7);
+                }
+                return errorMessage.substring(0, jsonStart) + cleanMessage;
+            }
         }
         return errorMessage;
     }
@@ -468,9 +369,9 @@ public class ClientUI {
             WebSocketClient.MessageHandler messageHandler = new WebSocketClient.MessageHandler() {
                 public void handleLoadGame(ChessGame game) {
                     currentGame = game;
-                    highlightedSquares.clear();
+                    boardRenderer.clearHighlights();
                     System.out.println("\n=== Game Updated ===");
-                    displayBoardFromGame(game);
+                    boardRenderer.displayGameBoard(game, playerColor);
                     System.out.print(">>> ");
                 }
 
@@ -489,34 +390,6 @@ public class ClientUI {
         } catch (Exception e) {
             System.out.println("Failed to connect to game: " + e.getMessage());
         }
-    }
-
-    private void displayBoardFromGame(ChessGame game) {
-        boolean whiteBottom = playerColor == null || playerColor.equals("WHITE");
-        String[][] board = convertChessGameToBoard(game);
-        
-        System.out.println();
-        drawChessBoard(board, whiteBottom);
-        System.out.println();
-    }
-
-    private String[][] convertChessGameToBoard(ChessGame game) {
-        String[][] board = new String[8][8];
-        
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                chess.ChessPosition pos = new chess.ChessPosition(row + 1, col + 1);
-                chess.ChessPiece piece = game.getBoard().getPiece(pos);
-                
-                if (piece == null) {
-                    board[row][col] = EscapeSequences.EMPTY;
-                } else {
-                    board[row][col] = getPieceSymbol(piece);
-                }
-            }
-        }
-        
-        return board;
     }
 
     private void printGameplayHelp() {
@@ -587,10 +460,11 @@ public class ClientUI {
     private void redrawBoard() {
         System.out.println("\nCurrent board state:");
         if (currentGame != null) {
-            displayBoardFromGame(currentGame);
+            boardRenderer.displayGameBoard(currentGame, playerColor);
             System.out.print(">>> ");
         } else {
-            displayBoard();
+            String[][] emptyBoard = boardRenderer.createEmptyBoard();
+            boardRenderer.displayBoard(emptyBoard, true);
         }
     }
 
@@ -607,8 +481,8 @@ public class ClientUI {
 
         try {
             ChessPosition pos = parsePosition(parts[1]);
-            highlightedSquares.clear();
-            
+            HashSet<ChessPosition> highlights = new HashSet<>();
+
             Collection<ChessMove> legalMoves = currentGame.validMoves(pos);
             if (legalMoves.isEmpty()) {
                 System.out.println("No legal moves for piece at " + parts[1]);
@@ -616,22 +490,23 @@ public class ClientUI {
             }
 
             for (ChessMove move : legalMoves) {
-                highlightedSquares.add(move.getEndPosition());
+                highlights.add(move.getEndPosition());
             }
             
-                    System.out.println("Highlighting " + legalMoves.size() + " legal moves for piece at " + parts[1] + ":");
-        displayBoardFromGame(currentGame);
-        System.out.print(">>> ");
+            boardRenderer.setHighlightedSquares(highlights);
+            System.out.println("Highlighting " + legalMoves.size() + " legal moves for piece at " + parts[1] + ":");
+            boardRenderer.displayGameBoard(currentGame, playerColor);
+            System.out.print(">>> ");
         } catch (Exception e) {
             System.out.println("Invalid position: " + e.getMessage());
         }
     }
 
     private void clearHighlights() {
-        highlightedSquares.clear();
+        boardRenderer.clearHighlights();
         System.out.println("Cleared move highlights");
         if (currentGame != null) {
-            displayBoardFromGame(currentGame);
+            boardRenderer.displayGameBoard(currentGame, playerColor);
             System.out.print(">>> ");
         }
     }
@@ -649,26 +524,5 @@ public class ClientUI {
         }
         
         return new ChessPosition(row - '0', col - 'a' + 1);
-    }
-
-    private String getPieceSymbol(chess.ChessPiece piece) {
-        boolean isWhite = piece.getTeamColor() == chess.ChessGame.TeamColor.WHITE;
-        
-        switch (piece.getPieceType()) {
-            case KING:
-                return isWhite ? EscapeSequences.WHITE_KING : EscapeSequences.BLACK_KING;
-            case QUEEN:
-                return isWhite ? EscapeSequences.WHITE_QUEEN : EscapeSequences.BLACK_QUEEN;
-            case BISHOP:
-                return isWhite ? EscapeSequences.WHITE_BISHOP : EscapeSequences.BLACK_BISHOP;
-            case KNIGHT:
-                return isWhite ? EscapeSequences.WHITE_KNIGHT : EscapeSequences.BLACK_KNIGHT;
-            case ROOK:
-                return isWhite ? EscapeSequences.WHITE_ROOK : EscapeSequences.BLACK_ROOK;
-            case PAWN:
-                return isWhite ? EscapeSequences.WHITE_PAWN : EscapeSequences.BLACK_PAWN;
-            default:
-                return EscapeSequences.EMPTY;
-        }
     }
 }

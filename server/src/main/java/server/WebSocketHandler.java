@@ -48,18 +48,7 @@ public class WebSocketHandler {
             if (sessions != null && sessions.containsKey(session)) {
                 sessions.remove(session);
                 
-                try {
-                    if (authToken != null) {
-                        AuthData auth = dataAccess.getAuth(authToken);
-                        if (auth != null) {
-                            String user = auth.username();
-                            String disconnectMsg = user + " disconnected";
-                            broadcastToGame(gameID, disconnectMsg, session);
-                        }
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error handling disconnect: " + e.getMessage());
-                }
+                handleDisconnectNotification(authToken, gameID, session);
                 
                 if (sessions.isEmpty()) {
                     gameToSessions.remove(gameID);
@@ -316,6 +305,21 @@ public class WebSocketHandler {
                     sendNotificationMessage(s, message);
                 }
             }
+        }
+    }
+
+    private void handleDisconnectNotification(String authToken, Integer gameID, Session session) {
+        try {
+            if (authToken != null) {
+                AuthData auth = dataAccess.getAuth(authToken);
+                if (auth != null) {
+                    String user = auth.username();
+                    String disconnectMsg = user + " disconnected";
+                    broadcastToGame(gameID, disconnectMsg, session);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error handling disconnect: " + e.getMessage());
         }
     }
 
