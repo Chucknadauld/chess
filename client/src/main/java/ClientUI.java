@@ -378,8 +378,7 @@ public class ClientUI {
     }
 
     private void gameplayMenu() {
-        String prompt = playerColor != null ? "[" + playerColor + " PLAYER] >>> " : "[OBSERVER] >>> ";
-        System.out.print(prompt);
+        System.out.print(">>> ");
         String input = scanner.nextLine();
         
         if (input == null) {
@@ -470,10 +469,9 @@ public class ClientUI {
                 public void handleLoadGame(ChessGame game) {
                     currentGame = game;
                     highlightedSquares.clear();
-                    System.out.print("\n=== Game Updated ===");
+                    System.out.println("\n=== Game Updated ===");
                     displayBoardFromGame(game);
-                    String prompt = playerColor != null ? "[" + playerColor + " PLAYER] >>> " : "[OBSERVER] >>> ";
-                    System.out.print(prompt);
+                    System.out.print(">>> ");
                 }
 
                 public void handleError(String errorMessage) {
@@ -481,9 +479,8 @@ public class ClientUI {
                 }
 
                 public void handleNotification(String message) {
-                    System.out.print("\n>>> " + message);
-                    String prompt = playerColor != null ? "\n[" + playerColor + " PLAYER] >>> " : "\n[OBSERVER] >>> ";
-                    System.out.print(prompt);
+                    System.out.println("\n>>> " + message);
+                    System.out.print(">>> ");
                 }
             };
 
@@ -591,6 +588,7 @@ public class ClientUI {
         System.out.println("\nCurrent board state:");
         if (currentGame != null) {
             displayBoardFromGame(currentGame);
+            System.out.print(">>> ");
         } else {
             displayBoard();
         }
@@ -621,8 +619,9 @@ public class ClientUI {
                 highlightedSquares.add(move.getEndPosition());
             }
             
-            System.out.println("Highlighting " + legalMoves.size() + " legal moves for piece at " + parts[1] + ":");
-            displayBoardFromGame(currentGame);
+                    System.out.println("Highlighting " + legalMoves.size() + " legal moves for piece at " + parts[1] + ":");
+        displayBoardFromGame(currentGame);
+        System.out.print(">>> ");
         } catch (Exception e) {
             System.out.println("Invalid position: " + e.getMessage());
         }
@@ -633,6 +632,7 @@ public class ClientUI {
         System.out.println("Cleared move highlights");
         if (currentGame != null) {
             displayBoardFromGame(currentGame);
+            System.out.print(">>> ");
         }
     }
 
