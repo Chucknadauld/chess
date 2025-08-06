@@ -41,7 +41,31 @@ public class WebSocketHandler {
     public void onClose(Session session, int statusCode, String reason) {
         System.out.println("WebSocket connection closed");
         String authToken = sessionToAuthToken.remove(session);
-        gameToSessions.values().forEach(sessions -> sessions.remove(session));
+        
+        for (Integer gameID : gameToSessions.keySet()) {
+            ConcurrentHashMap<Session, String> sessions = gameToSessions.get(gameID);
+            if (sessions != null && sessions.containsKey(session)) {
+                sessions.remove(session);
+                
+                try {
+                    if (authToken != null) {
+                        AuthData auth = dataAccess.getAuth(authToken);
+                        if (auth != null) {
+                            String user = auth.username();
+                            String disconnectMsg = user + " disconnected";
+                            broadcastToGame(gameID, disconnectMsg, session);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error handling disconnect: " + e.getMessage());
+                }
+                
+                if (sessions.isEmpty()) {
+                    gameToSessions.remove(gameID);
+                }
+                break;
+            }
+        }
     }
 
     @OnWebSocketMessage
@@ -174,7 +198,32 @@ public class WebSocketHandler {
     }
 
     private void handleLeave(Session session, UserGameCommand command) throws IOException {
-        System.out.println("Handling leave for game " + command.getGameID());
+        try {
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                sendErrorMessage(session, "Invalid auth token");
+                return;
+            }
+
+            String user = auth.username();
+            Integer gameID = command.getGameID();
+
+            sessionToAuthToken.remove(session);
+            ConcurrentHashMap<Session, String> sessions = gameToSessions.get(gameID);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    gameToSessions.remove(gameID);
+                }
+            }
+
+            String leaveMsg = user + " left the game";
+            broadcastToGame(gameID, leaveMsg, session);
+
+            System.out.println("User " + user + " left game " + gameID);
+        } catch (DataAccessException e) {
+            sendErrorMessage(session, "Database error: " + e.getMessage());
+        }
     }
 
     private void handleResign(Session session, UserGameCommand command) throws IOException {
