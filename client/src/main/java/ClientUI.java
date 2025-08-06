@@ -388,6 +388,7 @@ public class ClientUI {
             case "help" -> printGameplayHelp();
             case "move" -> handleMove(parts);
             case "leave" -> handleLeaveGame();
+            case "resign" -> handleResignGame();
             case "redraw" -> displayBoard();
             case "quit", "exit" -> handleLeaveGame();
             default -> System.out.println("Unknown command. Type 'help' for available commands.");
@@ -520,6 +521,7 @@ public class ClientUI {
     private void printGameplayHelp() {
         System.out.println("move <from> <to> - make a move (e.g., move e2 e4)");
         System.out.println("leave - leave the game");
+        System.out.println("resign - forfeit the game");
         System.out.println("redraw - redraw the board");
         System.out.println("help - see this message");
     }
@@ -553,6 +555,27 @@ public class ClientUI {
             }
         } catch (Exception e) {
             System.out.println("Error leaving game: " + e.getMessage());
+        }
+    }
+
+    private void handleResignGame() {
+        if (playerColor == null) {
+            System.out.println("Observers cannot resign");
+            return;
+        }
+
+        System.out.print("Are you sure you want to resign? (yes/no): ");
+        String confirm = scanner.nextLine().trim().toLowerCase();
+        
+        if (confirm.equals("yes") || confirm.equals("y")) {
+            try {
+                serverFacade.resignGame(authToken, currentGameID);
+                System.out.println("You have resigned from the game");
+            } catch (Exception e) {
+                System.out.println("Error resigning: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Resign cancelled");
         }
     }
 

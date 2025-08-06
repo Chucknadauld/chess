@@ -227,7 +227,42 @@ public class WebSocketHandler {
     }
 
     private void handleResign(Session session, UserGameCommand command) throws IOException {
-        System.out.println("Handling resign for game " + command.getGameID());
+        try {
+            AuthData auth = dataAccess.getAuth(command.getAuthToken());
+            if (auth == null) {
+                sendErrorMessage(session, "Invalid auth token");
+                return;
+            }
+
+            GameData game = dataAccess.getGame(command.getGameID());
+            if (game == null) {
+                sendErrorMessage(session, "Game not found");
+                return;
+            }
+
+            String user = auth.username();
+            boolean isWhitePlayer = user.equals(game.whiteUsername());
+            boolean isBlackPlayer = user.equals(game.blackUsername());
+            
+            if (!isWhitePlayer && !isBlackPlayer) {
+                sendErrorMessage(session, "You are not a player in this game");
+                return;
+            }
+
+            String winner;
+            if (isWhitePlayer) {
+                winner = game.blackUsername() != null ? game.blackUsername() : "Black";
+            } else {
+                winner = game.whiteUsername() != null ? game.whiteUsername() : "White";
+            }
+
+            String resignMsg = user + " resigned. " + winner + " wins!";
+            broadcastToGame(command.getGameID(), resignMsg, null);
+
+            System.out.println("User " + user + " resigned from game " + command.getGameID());
+        } catch (DataAccessException e) {
+            sendErrorMessage(session, "Database error: " + e.getMessage());
+        }
     }
 
     private void sendErrorMessage(Session session, String errorMessage) throws IOException {
