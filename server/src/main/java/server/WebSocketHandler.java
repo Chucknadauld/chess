@@ -181,7 +181,7 @@ public class WebSocketHandler {
                     broadcastToGame(command.getGameID(), checkmateMsg, null);
                     gameOverState.put(command.getGameID(), true);
                 } else {
-                    String checkMsg = (nextTurn == chess.ChessGame.TeamColor.WHITE ? "White" : "Black") + " is in check";
+                    String checkMsg = (nextTurn == chess.ChessGame.TeamColor.WHITE ? game.whiteUsername() : game.blackUsername()) + " is in check";
                     broadcastToGame(command.getGameID(), checkMsg, null);
                 }
             } else if (chessGame.isInStalemate(nextTurn)) {
